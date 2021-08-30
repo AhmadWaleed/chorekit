@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ahmadwaleed/choreui/app/context"
+	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
 	"github.com/ahmadwaleed/choreui/app/models"
 	"github.com/labstack/echo/v4"
@@ -18,13 +18,14 @@ type (
 )
 
 func GetUser(c echo.Context) error {
-	cc := c.(*context.AppContext)
+	cc := c.(*core.AppContext)
 	userID := c.Param("id")
 
 	user := models.User{ID: userID}
 
-	err := cc.UserStore.First(&user)
+	store := models.NewUserStore(cc.App.DB())
 
+	err := store.First(&user)
 	if err != nil {
 		b := errors.NewBoom(errors.UserNotFound, errors.ErrorText(errors.UserNotFound), err)
 		c.Logger().Error(err)
@@ -41,13 +42,14 @@ func GetUser(c echo.Context) error {
 }
 
 func GetUserJSON(c echo.Context) error {
-	cc := c.(*context.AppContext)
+	cc := c.(*core.AppContext)
 	userID := c.Param("id")
 
 	user := models.User{ID: userID}
 
-	err := cc.UserStore.First(&user)
+	store := models.NewUserStore(cc.App.DB())
 
+	err := store.First(&user)
 	if err != nil {
 		b := errors.NewBoom(errors.UserNotFound, errors.ErrorText(errors.UserNotFound), err)
 		c.Logger().Error(err)

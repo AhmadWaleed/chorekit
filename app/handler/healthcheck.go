@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ahmadwaleed/choreui/app/context"
+	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,7 +14,7 @@ type healthcheckReport struct {
 
 // GetHealthcheck returns the current functional state of the application
 func GetHealthcheck(c echo.Context) error {
-	cc := c.(*context.AppContext)
+	cc := c.(*core.AppContext)
 	_ = cc
 	m := healthcheckReport{Health: "OK"}
 

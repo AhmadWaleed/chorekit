@@ -6,6 +6,7 @@ import (
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/handler"
+	"github.com/ahmadwaleed/choreui/app/models"
 	// "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -30,6 +31,19 @@ func main() {
 	// metric / health endpoint according to RFC 5785
 	app.Echo.GET("/.well-known/health-check", handler.GetHealthcheck)
 	// app.Echo.GET("/.well-known/metrics", echo.WrapHandler(promhttp.Handler()))
+
+	// migration for dev
+	user := models.User{Name: "Peter"}
+	mr := app.ModelRegistry()
+	if err := mr.Register(user); err != nil {
+		app.Echo.Logger.Fatal(err)
+	}
+
+	if err := mr.AutoMigrateAll(); err != nil {
+		app.Echo.Logger.Fatal(err)
+	}
+
+	mr.Create(&user)
 
 	// Start server
 	go func() {

@@ -55,7 +55,6 @@ func (m *Model) OpenWithConfig(cfg *config.AppConfig) error {
 
 // Register adds the values to the models registry
 func (m *Model) Register(values ...interface{}) error {
-
 	// do not work on them.models first, this is like an insurance policy
 	// whenever we encounter any error in the values nothing goes into the registry
 	models := make(map[string]reflect.Value)
@@ -80,17 +79,25 @@ func (m *Model) Register(values ...interface{}) error {
 }
 
 // AutoMigrateAll runs migrations for all the registered models
-func (m *Model) AutoMigrateAll() {
+func (m *Model) AutoMigrateAll() error {
 	for _, v := range m.models {
-		m.AutoMigrate(v.Interface())
+		if err := m.AutoMigrate(v.Interface()); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // AutoDropAll drops all tables of all registered models
-func (m *Model) AutoDropAll() {
+func (m *Model) AutoDropAll() error {
 	for _, v := range m.models {
-		m.Migrator().DropTable(v)
+		if err := m.Migrator().DropTable(v); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func getTypeName(typ reflect.Type) string {

@@ -3,12 +3,10 @@ package core
 import (
 	"net/http"
 
-	"github.com/ahmadwaleed/choreui/app/context"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
-	mid "github.com/ahmadwaleed/choreui/app/core/middleware"
 	"github.com/ahmadwaleed/choreui/app/i18n"
-	"github.com/labstack/echo/middleware"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	v "gopkg.in/go-playground/validator.v9"
 )
 
@@ -17,14 +15,12 @@ func NewRouter(app *Application) *echo.Echo {
 	e := echo.New()
 	e.Validator = &Validator{validator: v.New()}
 
-	cc := context.AppContext{
-		// Cache:     &CacheStore{Cache: app.cache},
-		Config: config,
-		// UserStore: &UserStore{DB: app.db},
+	cc := AppContext{
+		App: app,
 		Loc: i18n.New(),
 	}
 
-	e.Use(mid.AppContext(&cc))
+	e.Use(AppCtxMiddleware(&cc))
 
 	if config.RequestLogger {
 		e.Use(middleware.Logger()) // request logger
@@ -41,7 +37,7 @@ func NewRouter(app *Application) *echo.Echo {
 	}))
 
 	// add custom error formating
-	e.HTTPErrorHandler = httpErrHandleFunc
+	e.HTTPErrorHandler = httpErrHandler
 
 	// Add html templates with go template syntax
 	renderer := newTemplateRenderer(config.LayoutDir, config.TemplateDir)
@@ -50,7 +46,7 @@ func NewRouter(app *Application) *echo.Echo {
 	return e
 }
 
-var httpErrHandleFunc = func(err error, c echo.Context) {
+func httpErrHandler(err error, c echo.Context) {
 	c.Logger().Error(err)
 	code := http.StatusInternalServerError
 

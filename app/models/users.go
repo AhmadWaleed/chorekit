@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	ID        string `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ID        string `gorm:"primaryKey"`
 	Name      string `sql:"type:varchar(30)"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -19,6 +19,10 @@ type UserModel interface {
 	Find(m *[]User) error
 	Create(m *User) error
 	Ping() error
+}
+
+func NewUserStore(db *gorm.DB) UserModel {
+	return &MysqlUserModel{db}
 }
 
 // UserStore implements the UserStore interface

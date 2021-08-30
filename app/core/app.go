@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"os"
 	"os/signal"
@@ -39,13 +40,28 @@ func BootstrapApp(config *config.AppConfig) *Application {
 	return app
 }
 
-// GetDB returns gorm (ORM)
-func (app *Application) GetDB() *gorm.DB {
+// GetModelRegistry returns the model registry
+func (app *Application) ModelRegistry() *models.Model {
+	return app.modelRegistry
+}
+
+// DB returns gorm (ORM)
+func (app *Application) DB() *gorm.DB {
 	return app.db
 }
 
-// GetConfig return the current app configuration
-func (app *Application) GetConfig() *config.AppConfig {
+// DBConn returns gorm (ORM) underlyig sql deriver connection
+func (app *Application) DBConn() (*sql.DB, error) {
+	conn, err := app.db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// Config return the current app configuration
+func (app *Application) Config() *config.AppConfig {
 	return app.config
 }
 
