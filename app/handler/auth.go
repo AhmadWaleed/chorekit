@@ -31,11 +31,15 @@ func Signup(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, err)
 		}
 
+		var errors []string
+		trans := core.NewTranslator()
 		for _, err := range err.(validator.ValidationErrors) {
-			return c.JSON(http.StatusUnprocessableEntity, err.Translate(core.NewTranslator()))
+			errors = append(errors, err.Translate(trans))
 		}
-	} else {
-		c.JSON(http.StatusInternalServerError, err)
+
+		if len(errors) > 0 {
+			return c.JSON(http.StatusUnprocessableEntity, errors)
+		}
 	}
 
 	store := models.NewUserStore(ctx.App.DB())
