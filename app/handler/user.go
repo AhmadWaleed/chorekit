@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
@@ -13,15 +14,15 @@ type (
 	User          struct{}
 	UserViewModel struct {
 		Name string
-		ID   string
+		ID   uint
 	}
 )
 
 func GetUser(c echo.Context) error {
 	cc := c.(*core.AppContext)
-	userID := c.Param("id")
+	userID, _ := strconv.Atoi(c.Param("id"))
 
-	user := models.User{ID: userID}
+	user := models.User{ID: uint(userID)}
 
 	store := models.NewUserStore(cc.App.DB())
 
@@ -43,9 +44,9 @@ func GetUser(c echo.Context) error {
 
 func GetUserJSON(c echo.Context) error {
 	cc := c.(*core.AppContext)
-	userID := c.Param("id")
+	userID, _ := strconv.Atoi(c.Param("id"))
 
-	user := models.User{ID: userID}
+	user := models.User{ID: uint(userID)}
 
 	store := models.NewUserStore(cc.App.DB())
 

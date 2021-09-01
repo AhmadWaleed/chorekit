@@ -7,11 +7,13 @@ import (
 )
 
 type User struct {
-	ID        string `gorm:"primaryKey"`
+	ID        uint
 	Name      string `sql:"type:varchar(30)"`
+	Email     string `gorm:"unique"`
+	Password  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt *time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type UserModel interface {

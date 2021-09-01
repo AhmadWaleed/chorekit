@@ -24,6 +24,10 @@ func main() {
 	g := app.Echo.Group("/api")
 	g.GET("/users/:id", handler.GetUserJSON)
 
+	// auth endpoints
+	app.Echo.Group("/auth").
+		GET("/signup", handler.Signup)
+
 	// pages
 	u := app.Echo.Group("/users")
 	u.GET("/:id", handler.GetUser)
@@ -36,6 +40,10 @@ func main() {
 	user := models.User{Name: "Peter"}
 	mr := app.ModelRegistry()
 	if err := mr.Register(user); err != nil {
+		app.Echo.Logger.Fatal(err)
+	}
+
+	if err := mr.AutoDropAll(); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 
