@@ -15,22 +15,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+
 	// create server
 	app := core.BootstrapApp(config)
 	// serve files for dev
 	app.ServeStaticFiles()
 
-	// api endpoints
-	g := app.Echo.Group("/api")
-	g.GET("/users/:id", handler.GetUserJSON)
-
 	// auth endpoints
-	app.Echo.Group("/auth").
-		GET("/signup", handler.Signup)
+	auth := app.Echo.Group("/auth")
+	auth.GET("/signup", handler.SignupGet)
+	auth.POST("/signup", handler.SignupPost)
 
-	// pages
-	u := app.Echo.Group("/users")
-	u.GET("/:id", handler.GetUser)
+	// api endpoints
+	// g := app.Echo.Group("/api")
+	// g.GET("/users/:id", handler.GetUserJSON)
+
+	// // pages
+	// u := app.Echo.Group("/users")
+	// u.GET("/:id", handler.GetUser)
 
 	// metric / health endpoint according to RFC 5785
 	app.Echo.GET("/.well-known/health-check", handler.GetHealthcheck)

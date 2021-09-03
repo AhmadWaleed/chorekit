@@ -10,17 +10,21 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
-type user struct {
-	Name     string `validate:"required"`
-	Email    string `validate:"required,email"`
-	Password string `validate:"required"`
+type User struct {
+	Name     string `form:"name" validate:"required"`
+	Email    string `form:"email" validate:"required,email"`
+	Password string `form:"password" validate:"required"`
 }
 
-func Signup(c echo.Context) error {
+func SignupGet(c echo.Context) error {
+	return c.Render(http.StatusOK, "auth.signup", struct{}{})
+}
+
+func SignupPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	_ = ctx
 
-	user := new(user)
+	user := new(User)
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
@@ -38,15 +42,26 @@ func Signup(c echo.Context) error {
 		}
 
 		if len(errors) > 0 {
-			return c.JSON(http.StatusUnprocessableEntity, errors)
+			return c.Render(http.StatusUnprocessableEntity, "auth.signup", struct {
+				Errors []string
+			}{
+				Errors: errors,
+			})
 		}
+	}
+
+	hash, err := core.NewHasher().Generate(user.Password)
+	if err != nil {
+		b := errors.NewBoom(errors.EntityCreationError, errors.ErrorText(errors.EntityCreationError), err)
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, b)
 	}
 
 	store := models.NewUserStore(ctx.App.DB())
 	if err := store.Create(&models.User{
 		Name:     user.Name,
 		Email:    user.Email,
-		Password: user.Password,
+		Password: hash,
 	}); err != nil {
 		b := errors.NewBoom(errors.UserNotFound, errors.ErrorText(errors.UserNotFound), err)
 		c.Logger().Error(err)

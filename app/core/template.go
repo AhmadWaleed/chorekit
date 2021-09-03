@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/labstack/echo/v4"
@@ -26,13 +28,20 @@ func newTemplateRenderer(layoutsDir, templatesDir string) *templateRenderer {
 }
 
 func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	tmpl, ok := t.templates[name]
-	if !ok {
-		c.Logger().Fatalf("could not found template: %s", name)
-		return fmt.Errorf("could not found template: %s", name)
+	segments := strings.Split(name, ".")
+	if len(segments) > 2 {
+		return fmt.Errorf("could not parse template & layout")
 	}
 
-	return tmpl.ExecuteTemplate(w, "base", data)
+	layout, tmplName := segments[0], fmt.Sprintf("%s.html", segments[1])
+
+	tmpl, ok := t.templates[tmplName]
+	if !ok {
+		c.Logger().Fatalf("could not found template: %s", tmplName)
+		return fmt.Errorf("could not found template: %s", tmplName)
+	}
+
+	return tmpl.ExecuteTemplate(w, layout, data)
 }
 
 func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
@@ -41,8 +50,7 @@ func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
 		log.Fatal(err)
 	}
 
-	includes, err := filepath.Glob(templatesDir)
-
+	includes, err := globWalk(templatesDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,4 +78,28 @@ func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
 
 		t.templates[fileName] = template.Must(t.templates[fileName].ParseFiles(files...))
 	}
+}
+
+func globWalk(dir string) ([]string, error) {
+	root, pattern := filepath.Split(dir)
+
+	var files []string
+	err := filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			fls, err := filepath.Glob(fmt.Sprintf("%s/%s", path, pattern))
+			if err != nil {
+				return err
+			}
+
+			files = append(files, fls...)
+		}
+
+		return nil
+	})
+
+	return files, err
 }
