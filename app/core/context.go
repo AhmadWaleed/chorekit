@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/ahmadwaleed/choreui/app/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -9,6 +10,7 @@ import (
 // We can use the db store, cache and central configuration
 type AppContext struct {
 	echo.Context
-	App *Application
-	Loc i18n.I18ner
+	App       *Application
+	Loc       i18n.I18ner
+	UserStore models.UserModel
 }

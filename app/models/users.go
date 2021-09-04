@@ -23,10 +23,6 @@ type UserModel interface {
 	Ping() error
 }
 
-func NewUserStore(db *gorm.DB) UserModel {
-	return &MysqlUserModel{db}
-}
-
 // UserStore implements the UserStore interface
 type MysqlUserModel struct {
 	DB *gorm.DB

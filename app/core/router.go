@@ -5,6 +5,7 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/core/errors"
 	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/ahmadwaleed/choreui/app/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	v "gopkg.in/go-playground/validator.v9"
@@ -16,8 +17,9 @@ func NewRouter(app *Application) *echo.Echo {
 	e.Validator = &Validator{validator: v.New()}
 
 	cc := AppContext{
-		App: app,
-		Loc: i18n.New(),
+		App:       app,
+		Loc:       i18n.New(),
+		UserStore: &models.MysqlUserModel{DB: app.DB()},
 	}
 
 	e.Use(AppCtxMiddleware(&cc))

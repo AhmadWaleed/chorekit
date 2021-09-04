@@ -10,19 +10,24 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
-type User struct {
-	Name     string `form:"name" validate:"required"`
-	Email    string `form:"email" validate:"required,email"`
-	Password string `form:"password" validate:"required"`
-}
+type (
+	User struct {
+		Name     string `form:"name" validate:"required"`
+		Email    string `form:"email" validate:"required,email"`
+		Password string `form:"password" validate:"required"`
+	}
+
+	AuthViewModel struct {
+		Errors []string
+	}
+)
 
 func SignupGet(c echo.Context) error {
-	return c.Render(http.StatusOK, "auth.signup", struct{}{})
+	return c.Render(http.StatusOK, "auth.signup", AuthViewModel{})
 }
 
 func SignupPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
-	_ = ctx
 
 	user := new(User)
 	if err := c.Bind(user); err != nil {
@@ -35,18 +40,14 @@ func SignupPost(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, err)
 		}
 
-		var errors []string
+		var vErrs []string
 		trans := core.NewTranslator()
 		for _, err := range err.(validator.ValidationErrors) {
-			errors = append(errors, err.Translate(trans))
+			vErrs = append(vErrs, err.Translate(trans))
 		}
 
-		if len(errors) > 0 {
-			return c.Render(http.StatusUnprocessableEntity, "auth.signup", struct {
-				Errors []string
-			}{
-				Errors: errors,
-			})
+		if len(vErrs) > 0 {
+			return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{vErrs})
 		}
 	}
 
@@ -57,16 +58,16 @@ func SignupPost(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, b)
 	}
 
-	store := models.NewUserStore(ctx.App.DB())
-	if err := store.Create(&models.User{
+	err = ctx.UserStore.Create(&models.User{
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: hash,
-	}); err != nil {
+	})
+	if err != nil {
 		b := errors.NewBoom(errors.UserNotFound, errors.ErrorText(errors.UserNotFound), err)
 		c.Logger().Error(err)
 		return c.JSON(http.StatusNotFound, b)
 	}
 
-	return nil
+	return c.Render(http.StatusOK, "base.home", nil)
 }
