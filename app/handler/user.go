@@ -6,7 +6,7 @@ package handler
 
 // 	"github.com/ahmadwaleed/choreui/app/core"
 // 	"github.com/ahmadwaleed/choreui/app/core/errors"
-// 	"github.com/ahmadwaleed/choreui/app/models"
+// 	"github.com/ahmadwaleed/choreui/app/database"
 // 	"github.com/labstack/echo/v4"
 // )
 

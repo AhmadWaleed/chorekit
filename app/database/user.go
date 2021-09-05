@@ -1,4 +1,4 @@
-package models
+package database
 
 import (
 	"time"
@@ -28,20 +28,20 @@ type MysqlUserModel struct {
 	DB *gorm.DB
 }
 
-func (s *MysqlUserModel) First(m *User) error {
-	return s.DB.First(m).Error
+func (m *MysqlUserModel) First(u *User) error {
+	return m.DB.First(u).Error
 }
 
-func (s *MysqlUserModel) Create(m *User) error {
-	return s.DB.Create(m).Error
+func (m *MysqlUserModel) Create(u *User) error {
+	return m.DB.Create(u).Error
 }
 
-func (s *MysqlUserModel) Find(m *[]User) error {
-	return s.DB.Find(m).Error
+func (m *MysqlUserModel) Find(u *[]User) error {
+	return m.DB.Find(u).Error
 }
 
-func (s *MysqlUserModel) Ping() error {
-	db, err := s.DB.DB()
+func (m *MysqlUserModel) Ping() error {
+	db, err := m.DB.DB()
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
-	"github.com/ahmadwaleed/choreui/app/models"
+	models "github.com/ahmadwaleed/choreui/app/database"
 	"github.com/labstack/echo/v4"
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -58,7 +58,7 @@ func SignupPost(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, b)
 	}
 
-	err = ctx.UserStore.Create(&models.User{
+	err = ctx.Store.User.Create(&models.User{
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: hash,

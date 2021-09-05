@@ -7,7 +7,7 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core"
-	"github.com/ahmadwaleed/choreui/app/models"
+	"github.com/ahmadwaleed/choreui/app/database"
 )
 
 var e struct {
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	mr := e.app.ModelRegistry()
-	if err := e.app.ModelRegistry().Register(models.User{}); err != nil {
+	if err := e.app.ModelRegistry().Register(database.User{}); err != nil {
 		e.app.Echo.Logger.Fatal(err)
 	}
 

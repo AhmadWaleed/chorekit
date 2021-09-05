@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/ahmadwaleed/choreui/app/config"
+	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
-	"github.com/ahmadwaleed/choreui/app/models"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -19,7 +19,7 @@ type Application struct {
 	Echo          *echo.Echo        // HTTP middleware
 	config        *config.AppConfig // Configuration
 	db            *gorm.DB          // Database connection
-	modelRegistry *models.Model     // Model registry for migration
+	modelRegistry *database.Model   // Model registry for migration
 }
 
 // NewApp will create a new instance of the application
@@ -28,7 +28,7 @@ func BootstrapApp(config *config.AppConfig) *Application {
 	app.config = config
 	i18n.Configure(config.LocaleDir, config.Lang, config.LangDomain)
 
-	app.modelRegistry = models.NewModel()
+	app.modelRegistry = database.NewModel()
 	err := app.modelRegistry.OpenWithConfig(config)
 	if err != nil {
 		log.Fatalf("gorm: could not connect to db %q", err)
@@ -41,7 +41,7 @@ func BootstrapApp(config *config.AppConfig) *Application {
 }
 
 // GetModelRegistry returns the model registry
-func (app *Application) ModelRegistry() *models.Model {
+func (app *Application) ModelRegistry() *database.Model {
 	return app.modelRegistry
 }
 

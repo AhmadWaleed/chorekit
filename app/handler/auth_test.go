@@ -7,19 +7,19 @@ import (
 	"testing"
 
 	"github.com/ahmadwaleed/choreui/app/core"
+	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
-	"github.com/ahmadwaleed/choreui/app/models"
 )
 
 type UserFakeStore struct{}
 
-func (s *UserFakeStore) First(m *models.User) error {
+func (s *UserFakeStore) First(m *database.User) error {
 	return nil
 }
-func (s *UserFakeStore) Find(m *[]models.User) error {
+func (s *UserFakeStore) Find(m *[]database.User) error {
 	return nil
 }
-func (s *UserFakeStore) Create(m *models.User) error {
+func (s *UserFakeStore) Create(m *database.User) error {
 	return nil
 }
 func (s *UserFakeStore) Ping() error {
@@ -55,9 +55,9 @@ func TestSignupPost(t *testing.T) {
 	a.POST("/signup", SignupPost)
 
 	cc := core.AppContext{
-		App:       e.app,
-		Loc:       i18n.New(),
-		UserStore: &UserFakeStore{},
+		App:   e.app,
+		Loc:   i18n.New(),
+		Store: &database.Store{User: &UserFakeStore{}},
 	}
 
 	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
