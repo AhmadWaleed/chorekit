@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// create server
-	app := core.BootstrapApp(config)
+	app := core.NewApp(config)
 	// serve files for dev
 	app.ServeStaticFiles()
 
@@ -27,6 +27,10 @@ func main() {
 	auth.POST("/signup", handler.SignupPost)
 	auth.GET("/signin", handler.SignInGet)
 	auth.POST("/signin", handler.SignInPost)
+
+	host := app.Echo.Group("/hosts")
+	host.GET("/create", handler.CreateHostGet)
+	host.POST("/create", handler.CreateHostPost)
 
 	// api endpoints
 	// g := app.Echo.Group("/api")
