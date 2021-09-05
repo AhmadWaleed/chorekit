@@ -5,8 +5,8 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core"
+	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/handler"
-	"github.com/ahmadwaleed/choreui/app/models"
 	// "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -25,6 +25,8 @@ func main() {
 	auth := app.Echo.Group("/auth")
 	auth.GET("/signup", handler.SignupGet)
 	auth.POST("/signup", handler.SignupPost)
+	auth.GET("/signin", handler.SignInGet)
+	auth.POST("/signin", handler.SignInPost)
 
 	// api endpoints
 	// g := app.Echo.Group("/api")
@@ -39,7 +41,7 @@ func main() {
 	// app.Echo.GET("/.well-known/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	// migration for dev
-	user := models.User{Name: "Peter"}
+	user := database.User{Name: "Peter"}
 	mr := app.ModelRegistry()
 	if err := mr.Register(user); err != nil {
 		app.Echo.Logger.Fatal(err)

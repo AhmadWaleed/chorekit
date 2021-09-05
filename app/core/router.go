@@ -6,6 +6,8 @@ import (
 	"github.com/ahmadwaleed/choreui/app/core/errors"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	v "gopkg.in/go-playground/validator.v9"
@@ -23,6 +25,7 @@ func NewRouter(app *Application) *echo.Echo {
 	}
 
 	e.Use(AppCtxMiddleware(&cc))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(app.config.AppKey))))
 
 	if config.RequestLogger {
 		e.Use(middleware.Logger()) // request logger

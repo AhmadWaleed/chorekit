@@ -19,6 +19,7 @@ type AppConfig struct {
 	LocaleDir        string `env:"LOCALE_DIR" envDefault:"locales"`
 	Lang             string `env:"LANG" envDefault:"en_US"`
 	LangDomain       string `env:"LANG_DOMAIN" envDefault:"default"`
+	AppKey           string `env:"APP_KEY,required"`
 }
 
 func NewConfig(files ...string) (*AppConfig, error) {

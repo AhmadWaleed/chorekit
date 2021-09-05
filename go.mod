@@ -8,8 +8,10 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible // indirect
+	github.com/labstack/echo-contrib v0.11.0 // indirect
 	github.com/labstack/echo/v4 v4.5.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/kinako v0.0.0-20170717041458-332c0a7e205a // indirect
