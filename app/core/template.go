@@ -28,17 +28,17 @@ func newTemplateRenderer(layoutsDir, templatesDir string) *templateRenderer {
 }
 
 func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	segments := strings.Split(name, ".")
-	if len(segments) > 2 {
-		return fmt.Errorf("could not parse template & layout")
+	tmplname := strings.Split(name, ".")
+	if len(tmplname) != 2 {
+		return fmt.Errorf("could not parse given template")
 	}
 
-	layout, tmplName := segments[0], fmt.Sprintf("%s.html", segments[1])
+	layout, include := tmplname[0], fmt.Sprintf("%s.tmpl", tmplname[1])
 
-	tmpl, ok := t.templates[tmplName]
+	tmpl, ok := t.templates[include]
 	if !ok {
-		c.Logger().Fatalf("could not found template: %s", tmplName)
-		return fmt.Errorf("could not found template: %s", tmplName)
+		c.Logger().Fatalf("could not found template: %s", include)
+		return fmt.Errorf("could not found template: %s", include)
 	}
 
 	return tmpl.ExecuteTemplate(w, layout, data)
@@ -50,7 +50,7 @@ func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
 		log.Fatal(err)
 	}
 
-	includes, err := globWalk(templatesDir)
+	includes, err := glob(templatesDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
 	}
 }
 
-func globWalk(dir string) ([]string, error) {
+func glob(dir string) ([]string, error) {
 	root, pattern := filepath.Split(dir)
 
 	var files []string

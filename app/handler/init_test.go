@@ -19,8 +19,8 @@ var e struct {
 func TestMain(m *testing.M) {
 	e.config = &config.AppConfig{
 		ConnectionString: "root:root@tcp(127.0.0.1:3306)/choreui_testing?charset=utf8mb4&parseTime=True&loc=Local",
-		TemplateDir:      "../../web/templates/*.html",
-		LayoutDir:        "../../web/templates/layouts/*.html",
+		TemplateDir:      "../../web/templates/*.tmpl",
+		LayoutDir:        "../../web/templates/layouts/*.tmpl",
 	}
 
 	e.app = core.BootstrapApp(e.config)
