@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 		LayoutDir:        "../../web/templates/layouts/*.tmpl",
 	}
 
-	e.app = core.BootstrapApp(e.config)
+	e.app = core.NewApp(e.config)
 
 	setup()
 	c := m.Run()

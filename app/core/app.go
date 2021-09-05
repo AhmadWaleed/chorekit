@@ -23,7 +23,7 @@ type Application struct {
 }
 
 // NewApp will create a new instance of the application
-func BootstrapApp(config *config.AppConfig) *Application {
+func NewApp(config *config.AppConfig) *Application {
 	app := &Application{}
 	app.config = config
 	i18n.Configure(config.LocaleDir, config.Lang, config.LangDomain)

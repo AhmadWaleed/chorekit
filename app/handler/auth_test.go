@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,11 +12,19 @@ import (
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
+	"gorm.io/gorm"
 )
+
+var testuser = User{
+	Name:  "john",
+	Email: "j.doe@example.com",
+}
 
 type UserFakeStore struct{}
 
 func (s *UserFakeStore) First(m *database.User) error {
+	m.Name = testuser.Name
+	m.Email = testuser.Email
 	return nil
 }
 func (s *UserFakeStore) Find(m *[]database.User) error {
@@ -71,14 +80,16 @@ func TestSignupPost(t *testing.T) {
 	a.POST("/signup", SignupPost)
 
 	cc := core.AppContext{
-		App:   e.app,
-		Loc:   i18n.New(),
-		Store: &database.Store{User: &UserFakeStore{}},
+		App: e.app,
+		Loc: i18n.New(),
+		Store: func(db *gorm.DB) *database.Store {
+			return &database.Store{&UserFakeStore{}}
+		},
 	}
 
 	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
 
-	body := `name=john&email=j.doe@example.com&password=secret`
+	body := fmt.Sprintf("name=%s&email=%s&password=secret", testuser.Name, testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
@@ -109,14 +120,16 @@ func TestSignInPost(t *testing.T) {
 	a.POST("/signin", SignInPost)
 
 	cc := core.AppContext{
-		App:   e.app,
-		Loc:   i18n.New(),
-		Store: &database.Store{User: &UserFakeStore{}},
+		App: e.app,
+		Loc: i18n.New(),
+		Store: func(db *gorm.DB) *database.Store {
+			return &database.Store{&UserFakeStore{}}
+		},
 	}
 
 	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
 
-	body := `email=j.doe@example.com&password=secret`
+	body := fmt.Sprintf("email=%s&password=secret", testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signin", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
@@ -142,8 +155,8 @@ func TestSignInPost(t *testing.T) {
 	}
 
 	user := (sess.Values["user"]).(User)
-	if user.Email != "j.doe@example.com" {
-		t.Errorf("unexpected session user email, want: %s, got: %s", "j.doe@example.com", user.Email)
+	if user.Email != testuser.Email {
+		t.Errorf("unexpected session user email, want: %s, got: %s", testuser.Email, user.Email)
 	}
 
 	if rec.Code != http.StatusOK {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ahmadwaleed/choreui/app/core"
@@ -38,7 +39,11 @@ func SignupPost(c echo.Context) error {
 
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		c.Logger().Error(err)
+		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+			User:   User{Email: usr.Email},
+			Errors: []string{http.StatusText(http.StatusBadRequest)},
+		})
 	}
 
 	if err := ctx.Echo().Validator.Validate(usr); err != nil {
@@ -55,20 +60,25 @@ func SignupPost(c echo.Context) error {
 
 	hash, err := core.NewHasher().Generate(usr.Password)
 	if err != nil {
-		b := errors.NewBoom(errors.EntityCreationError, errors.ErrorText(errors.EntityCreationError), err)
 		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, b)
+		return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{
+			User:   User{Name: usr.Name, Email: usr.Email},
+			Errors: []string{fmt.Sprintf("%s: %v", errors.ErrorText(errors.EntityCreationError), err)},
+		})
 	}
 
-	err = ctx.Store.User.Create(&database.User{
+	store := ctx.Store(ctx.App.DB())
+	err = store.User.Create(&database.User{
 		Name:     usr.Name,
 		Email:    usr.Email,
 		Password: hash,
 	})
 	if err != nil {
-		b := errors.NewBoom(errors.UserNotFound, errors.ErrorText(errors.UserNotFound), err)
 		c.Logger().Error(err)
-		return c.JSON(http.StatusNotFound, b)
+		return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{
+			User:   User{Name: usr.Name, Email: usr.Email},
+			Errors: []string{errors.ErrorText(errors.EntityCreationError)},
+		})
 	}
 
 	return c.Render(http.StatusOK, "base.home", nil)
@@ -88,7 +98,10 @@ func SignInPost(c echo.Context) error {
 
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+			User:   User{Email: usr.Email},
+			Errors: []string{http.StatusText(http.StatusBadRequest)},
+		})
 	}
 
 	if err := ctx.Echo().Validator.Validate(usr); err != nil {
@@ -101,6 +114,16 @@ func SignInPost(c echo.Context) error {
 				Errors: errs,
 			})
 		}
+	}
+
+	store := ctx.Store(ctx.App.DB())
+	dbuser := new(database.User)
+	if err := store.User.First(dbuser); err != nil {
+		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+
+			User:   User{Email: usr.Email},
+			Errors: []string{errors.ErrorText(errors.UserNotFound)},
+		})
 	}
 
 	sess, err := session.Get("session", c)
@@ -118,7 +141,7 @@ func SignInPost(c echo.Context) error {
 		HttpOnly: true,
 	}
 	sess.Values["auth"] = true
-	sess.Values["user"] = User{Email: usr.Email}
+	sess.Values["user"] = User{Name: dbuser.Name, Email: dbuser.Email}
 	sess.Save(c.Request(), c.Response())
 
 	return nil

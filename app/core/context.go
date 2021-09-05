@@ -12,5 +12,5 @@ type AppContext struct {
 	echo.Context
 	App   *Application
 	Loc   i18n.I18ner
-	Store *database.Store
+	Store database.StoreFunc
 }

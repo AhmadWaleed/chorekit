@@ -6,7 +6,9 @@ type Store struct {
 	User UserModel
 }
 
-func NewStore(db *gorm.DB) *Store {
+type StoreFunc func(db *gorm.DB) *Store
+
+func NewStoreFunc(db *gorm.DB) *Store {
 	return &Store{
 		User: &MysqlUserModel{db},
 	}

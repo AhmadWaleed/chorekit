@@ -18,13 +18,11 @@ func NewRouter(app *Application) *echo.Echo {
 	e := echo.New()
 	e.Validator = &Validator{validator: v.New()}
 
-	cc := AppContext{
+	e.Use(AppCtxMiddleware(&AppContext{
 		App:   app,
 		Loc:   i18n.New(),
-		Store: database.NewStore(app.db),
-	}
-
-	e.Use(AppCtxMiddleware(&cc))
+		Store: database.NewStoreFunc,
+	}))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(app.config.AppKey))))
 
 	if config.RequestLogger {
