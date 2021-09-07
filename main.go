@@ -28,7 +28,7 @@ func main() {
 	auth.GET("/signin", handler.SignInGet)
 	auth.POST("/signin", handler.SignInPost)
 
-	host := app.Echo.Group("/hosts")
+	host := app.Echo.Group("/servers")
 	host.GET("/create", handler.CreateHostGet)
 	host.POST("/create", handler.CreateHostPost)
 

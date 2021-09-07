@@ -27,7 +27,7 @@ type (
 )
 
 func CreateHostGet(c echo.Context) error {
-	return c.Render(http.StatusOK, "base.create_host", nil)
+	return c.Render(http.StatusOK, "base.server/create", nil)
 }
 
 func CreateHostPost(c echo.Context) error {
