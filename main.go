@@ -21,6 +21,9 @@ func main() {
 	// serve files for dev
 	app.ServeStaticFiles()
 
+	// root routes
+	app.Echo.GET("/home", handler.Home)
+
 	// auth endpoints
 	auth := app.Echo.Group("/auth")
 	auth.GET("/signup", handler.SignupGet)

@@ -83,7 +83,7 @@ func TestSignupPost(t *testing.T) {
 		App: e.app,
 		Loc: i18n.New(),
 		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{&UserFakeStore{}}
+			return &database.Store{&UserFakeStore{}, nil}
 		},
 	}
 
@@ -123,7 +123,7 @@ func TestSignInPost(t *testing.T) {
 		App: e.app,
 		Loc: i18n.New(),
 		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{&UserFakeStore{}}
+			return &database.Store{&UserFakeStore{}, nil}
 		},
 	}
 

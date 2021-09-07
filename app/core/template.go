@@ -4,102 +4,75 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/fs"
-	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
-var mainTmpl = `{{define "main" }} {{ template "base" . }} {{ end }}`
-
-type templateRenderer struct {
-	templates map[string]*template.Template
+type Template struct {
+	Extension string
+	Folder    string
+	LayoutDir string
+	Data      map[string]interface{}
 }
 
-// NewTemplateRenderer creates a new setup to render layout based go templates
-func newTemplateRenderer(layoutsDir, templatesDir string) *templateRenderer {
-	r := &templateRenderer{}
-	r.templates = make(map[string]*template.Template)
-	r.Load(layoutsDir, templatesDir)
-	return r
+func NewTemplate(config *config.AppConfig) *Template {
+	return &Template{
+		Extension: config.TemplateExt,
+		Folder:    config.TemplateFolder,
+		LayoutDir: config.TemplateLayoutDir,
+	}
 }
 
-func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	tmplname := strings.Split(name, ".")
 	if len(tmplname) != 2 {
-		return fmt.Errorf("could not parse given template")
+		return fmt.Errorf("could not parse given template name")
 	}
 
-	layout, include := tmplname[0], fmt.Sprintf("%s.tmpl", tmplname[1])
+	root, tmpl := tmplname[0], tmplname[1]
 
-	tmpl, ok := t.templates[include]
-	if !ok {
-		c.Logger().Fatalf("could not found template: %s", include)
-		return fmt.Errorf("could not found template: %s", include)
-	}
-
-	return tmpl.ExecuteTemplate(w, layout, data)
-}
-
-func (t *templateRenderer) Load(layoutsDir, templatesDir string) {
-	layouts, err := filepath.Glob(layoutsDir)
+	layouts, err := filepath.Glob(
+		t.Folder + string(os.PathSeparator) + t.LayoutDir + string(os.PathSeparator) + "*." + t.Extension,
+	)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not load template layouts: %v", err)
 	}
 
-	includes, err := glob(templatesDir)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var includes []string
+	includes = append(includes, layouts...)
+	includes = append(includes, t.Folder+string(os.PathSeparator)+tmpl+"."+t.Extension)
 
-	funcMap := template.FuncMap{
+	template, err := template.New(name).Funcs(template.FuncMap{
 		"Lang": i18n.Get,
-	}
-
-	mainTemplate := template.New("main")
-	mainTemplate.Funcs(funcMap)
-
-	mainTemplate, err = mainTemplate.Parse(mainTmpl)
+	}).ParseFiles(includes...)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not parse template files: %v", err)
 	}
 
-	for _, file := range includes {
-		fileName := filepath.Base(file)
-		files := append(layouts, file)
-		t.templates[fileName], err = mainTemplate.Clone()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		t.templates[fileName] = template.Must(t.templates[fileName].ParseFiles(files...))
+	if err := t.LoadSessionData(c); err != nil {
+		return fmt.Errorf("could not load session data: %v", err)
 	}
+
+	return template.ExecuteTemplate(w, root+"."+t.Extension, data)
 }
 
-func glob(dir string) ([]string, error) {
-	root, pattern := filepath.Split(dir)
+func (t *Template) LoadSessionData(c echo.Context) error {
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return err
+	}
 
-	var files []string
-	err := filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
+	for key, val := range sess.Values {
+		if k, ok := key.(string); ok {
+			t.Data[k] = val
 		}
+	}
 
-		if info.IsDir() {
-			fls, err := filepath.Glob(fmt.Sprintf("%s/%s", path, pattern))
-			if err != nil {
-				return err
-			}
-
-			files = append(files, fls...)
-		}
-
-		return nil
-	})
-
-	return files, err
+	return nil
 }

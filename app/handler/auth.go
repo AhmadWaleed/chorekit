@@ -25,7 +25,7 @@ type (
 )
 
 func SignupGet(c echo.Context) error {
-	return c.Render(http.StatusOK, "auth.signup", AuthViewModel{})
+	return c.Render(http.StatusOK, "auth.auth/signup", AuthViewModel{})
 }
 
 func SignupPost(c echo.Context) error {
