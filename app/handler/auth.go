@@ -40,22 +40,19 @@ func SignupPost(c echo.Context) error {
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: []string{http.StatusText(http.StatusBadRequest)},
 		})
 	}
 
-	if err := ctx.Echo().Validator.Validate(usr); err != nil {
-		c.Logger().Error(err)
-		errs := core.TransValidationErrors(err)
+	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
+		c.Logger().Error(errs)
 
-		if len(errs) > 0 {
-			return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{
-				User:   User{Name: usr.Name, Email: usr.Email},
-				Errors: errs,
-			})
-		}
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/signup", AuthViewModel{
+			User:   User{Name: usr.Name, Email: usr.Email},
+			Errors: errs,
+		})
 	}
 
 	hash, err := core.NewHasher().Generate(usr.Password)
@@ -104,16 +101,13 @@ func SignInPost(c echo.Context) error {
 		})
 	}
 
-	if err := ctx.Echo().Validator.Validate(usr); err != nil {
-		c.Logger().Error(err)
-		errs := core.TransValidationErrors(err)
+	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
+		c.Logger().Error(errs)
 
-		if len(errs) > 0 {
-			return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
-				User:   User{Email: usr.Email},
-				Errors: errs,
-			})
-		}
+		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+			User:   User{Email: usr.Email},
+			Errors: errs,
+		})
 	}
 
 	store := ctx.Store(ctx.App.DB())

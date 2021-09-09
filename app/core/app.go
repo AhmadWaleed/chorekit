@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ahmadwaleed/choreui/app/config"
+	"github.com/ahmadwaleed/choreui/app/core/validator"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/labstack/echo/v4"
@@ -16,7 +17,8 @@ import (
 )
 
 type Application struct {
-	Echo          *echo.Echo        // HTTP middleware
+	Echo          *echo.Echo // HTTP middleware
+	Validator     *validator.Validator
 	config        *config.AppConfig // Configuration
 	db            *gorm.DB          // Database connection
 	modelRegistry *database.Model   // Model registry for migration
@@ -33,6 +35,9 @@ func NewApp(config *config.AppConfig) *Application {
 	if err != nil {
 		log.Fatalf("gorm: could not connect to db %q", err)
 	}
+
+	v, _ := validator.NewValidator()
+	app.Validator = v
 
 	app.Echo = NewRouter(app)
 	app.db = app.modelRegistry.DB

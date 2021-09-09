@@ -13,7 +13,7 @@ var (
 	Inactive Status = "inactive"
 )
 
-type Host struct {
+type Server struct {
 	ID            uint
 	Name          string `sql:"type:varchar(30)"`
 	IP            string
@@ -27,35 +27,35 @@ type Host struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
 
-type HostModel interface {
-	First(m *Host) error
-	Find(m *[]Host) error
-	Create(m *Host) error
-	Update(m *Host) error
+type ServerModel interface {
+	First(m *Server) error
+	Find(m *[]Server) error
+	Create(m *Server) error
+	Update(m *Server) error
 	Ping() error
 }
 
-type MysqlHostModel struct {
+type MysqlServerModel struct {
 	DB *gorm.DB
 }
 
-func (m *MysqlHostModel) First(h *Host) error {
+func (m *MysqlServerModel) First(h *Server) error {
 	return m.DB.First(h).Error
 }
 
-func (m *MysqlHostModel) Create(h *Host) error {
+func (m *MysqlServerModel) Create(h *Server) error {
 	return m.DB.Create(h).Error
 }
 
-func (m *MysqlHostModel) Find(h *[]Host) error {
+func (m *MysqlServerModel) Find(h *[]Server) error {
 	return m.DB.Find(h).Error
 }
 
-func (m *MysqlHostModel) Update(h *Host) error {
+func (m *MysqlServerModel) Update(h *Server) error {
 	return m.DB.Save(h).Error
 }
 
-func (m *MysqlHostModel) Ping() error {
+func (m *MysqlServerModel) Ping() error {
 	db, err := m.DB.DB()
 	if err != nil {
 		return err

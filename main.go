@@ -32,8 +32,8 @@ func main() {
 	auth.POST("/signin", handler.SignInPost)
 
 	host := app.Echo.Group("/servers")
-	host.GET("/create", handler.CreateHostGet)
-	host.POST("/create", handler.CreateHostPost)
+	host.GET("/create", handler.CreateServerGet)
+	host.POST("/create", handler.CreateServerPost)
 
 	// api endpoints
 	// g := app.Echo.Group("/api")

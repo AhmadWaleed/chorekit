@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	Host struct {
+	Server struct {
 		Name          string `form:"name" validate:"required"`
 		IP            string `form:"name" validate:"required"`
 		User          string `form:"email" validate:"required"`
@@ -21,55 +21,52 @@ type (
 	}
 
 	HostViewModel struct {
-		Host   Host
+		Server Server
 		Errors []string
 	}
 )
 
-func CreateHostGet(c echo.Context) error {
+func CreateServerGet(c echo.Context) error {
 	return c.Render(http.StatusOK, "base.server/create", nil)
 }
 
-func CreateHostPost(c echo.Context) error {
+func CreateServerPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	_ = ctx
 
-	h := new(Host)
-	if err := c.Bind(h); err != nil {
+	srv := new(Server)
+	if err := c.Bind(srv); err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "base.create_host", HostViewModel{
-			Host:   *h,
+		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
+			Server: *srv,
 			Errors: []string{http.StatusText(http.StatusBadRequest)},
 		})
 	}
 
-	if err := ctx.Echo().Validator.Validate(h); err != nil {
-		c.Logger().Error(err)
-		errs := core.TransValidationErrors(err)
+	if errs := ctx.App.Validator.Validate(srv); len(errs) > 0 {
+		c.Logger().Error(errs)
 
-		if len(errs) > 0 {
-			return c.Render(http.StatusUnprocessableEntity, "auth.signup", HostViewModel{
-				Host:   *h,
-				Errors: errs,
-			})
-		}
+		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
+			Server: *srv,
+			Errors: errs,
+		})
 	}
 
 	store := ctx.Store(ctx.App.DB())
-	err := store.Host.Create(&database.Host{
-		Name:   h.Name,
-		IP:     h.IP,
-		User:   h.User,
-		Port:   h.Port,
+	err := store.Server.Create(&database.Server{
+		Name:   srv.Name,
+		IP:     srv.IP,
+		User:   srv.User,
+		Port:   srv.Port,
 		Status: string(database.Inactive),
 	})
 	if err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "auth.signup", HostViewModel{
-			Host:   *h,
+		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
+			Server: *srv,
 			Errors: []string{errors.ErrorText(errors.EntityCreationError)},
 		})
 	}
 
-	return c.Render(http.StatusOK, "base.create_host", nil)
+	return c.Render(http.StatusOK, "base.server/create", nil)
 }

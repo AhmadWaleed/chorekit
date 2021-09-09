@@ -1,4 +1,4 @@
-package core
+package validator
 
 import (
 	"fmt"
@@ -6,7 +6,8 @@ import (
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
-	validator "gopkg.in/go-playground/validator.v9"
+	validator "github.com/go-playground/validator/v10"
+	en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
 type Validator struct {
@@ -14,8 +15,13 @@ type Validator struct {
 	trans     ut.Translator
 }
 
-func (v *Validator) Validate(i interface{}) error {
-	return v.validator.Struct(i)
+func (v *Validator) Validate(i interface{}) []string {
+	err := v.validator.Struct(i)
+	if err == nil {
+		return []string{}
+	}
+
+	return v.TranslateErrors(err)
 }
 
 func NewValidator() (*Validator, error) {
@@ -27,20 +33,9 @@ func NewValidator() (*Validator, error) {
 	}
 
 	v := &Validator{validator: validator.New(), trans: trans}
-	v.RegisterCustomTrans()
+	en_translations.RegisterDefaultTranslations(v.validator, trans)
 
 	return v, nil
-}
-
-func (v *Validator) RegisterCustomTrans() error {
-	v.validator.RegisterTranslation("required", v.trans, func(ut ut.Translator) error {
-		return ut.Add("required", "{0} must have a value!", true) // see universal-translator for details
-	}, func(ut ut.Translator, fe validator.FieldError) string {
-		t, _ := ut.T("required", fe.Field())
-
-		return t
-	})
-	return nil
 }
 
 func (v *Validator) TranslateErrors(err error) []string {

@@ -10,13 +10,11 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	v "gopkg.in/go-playground/validator.v9"
 )
 
 func NewRouter(app *Application) *echo.Echo {
 	config := app.config
 	e := echo.New()
-	e.Validator = &Validator{validator: v.New()}
 
 	e.Use(AppCtxMiddleware(&AppContext{
 		App:   app,
