@@ -40,6 +40,7 @@ func SignupPost(c echo.Context) error {
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
 		c.Logger().Error(err)
+
 		return c.Render(http.StatusUnprocessableEntity, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: []string{http.StatusText(http.StatusBadRequest)},
@@ -58,7 +59,7 @@ func SignupPost(c echo.Context) error {
 	hash, err := core.NewHasher().Generate(usr.Password)
 	if err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/signup", AuthViewModel{
 			User:   User{Name: usr.Name, Email: usr.Email},
 			Errors: []string{fmt.Sprintf("%s: %v", errors.ErrorText(errors.EntityCreationError), err)},
 		})
@@ -72,13 +73,13 @@ func SignupPost(c echo.Context) error {
 	})
 	if err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "auth.signup", AuthViewModel{
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/signup", AuthViewModel{
 			User:   User{Name: usr.Name, Email: usr.Email},
 			Errors: []string{errors.ErrorText(errors.EntityCreationError)},
 		})
 	}
 
-	return c.Render(http.StatusOK, "base.home", nil)
+	return c.Redirect(http.StatusSeeOther, "/home")
 }
 
 func SignInGet(c echo.Context) error {
@@ -95,7 +96,7 @@ func SignInPost(c echo.Context) error {
 
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
-		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: []string{http.StatusText(http.StatusBadRequest)},
 		})
@@ -104,7 +105,7 @@ func SignInPost(c echo.Context) error {
 	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
 		c.Logger().Error(errs)
 
-		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: errs,
 		})
@@ -113,8 +114,7 @@ func SignInPost(c echo.Context) error {
 	store := ctx.Store(ctx.App.DB())
 	dbuser := new(database.User)
 	if err := store.User.First(dbuser); err != nil {
-		return c.Render(http.StatusUnprocessableEntity, "auth.login", AuthViewModel{
-
+		return c.Render(http.StatusUnprocessableEntity, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: []string{errors.ErrorText(errors.UserNotFound)},
 		})
@@ -123,7 +123,7 @@ func SignInPost(c echo.Context) error {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusInternalServerError, "auth.login", AuthViewModel{
+		return c.Render(http.StatusInternalServerError, "auth.auth/login", AuthViewModel{
 			User:   User{Email: usr.Email},
 			Errors: []string{http.StatusText(http.StatusInternalServerError)},
 		})
@@ -138,5 +138,5 @@ func SignInPost(c echo.Context) error {
 	sess.Values["user"] = User{Name: dbuser.Name, Email: dbuser.Email}
 	sess.Save(c.Request(), c.Response())
 
-	return nil
+	return c.Redirect(http.StatusSeeOther, "/home")
 }

@@ -19,7 +19,7 @@ var e struct {
 func TestMain(m *testing.M) {
 	e.config = &config.AppConfig{
 		ConnectionString:  "root:root@tcp(127.0.0.1:3306)/choreui_testing?charset=utf8mb4&parseTime=True&loc=Local",
-		TemplateFolder:    "web/templates",
+		TemplateFolder:    "../../web/templates",
 		TemplateLayoutDir: "layouts",
 		TemplateExt:       "tmpl",
 	}

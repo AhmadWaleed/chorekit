@@ -52,6 +52,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 		"Lang": i18n.Get,
 	}).ParseFiles(includes...)
 	if err != nil {
+		fmt.Println(includes)
 		return fmt.Errorf("could not parse template files: %v", err)
 	}
 

@@ -96,7 +96,7 @@ func TestSignupPost(t *testing.T) {
 
 	e.app.Echo.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
+	if rec.Code != http.StatusSeeOther {
 		t.Errorf("could not signup new user, status want %d got %d", http.StatusOK, rec.Code)
 	}
 }
@@ -159,7 +159,7 @@ func TestSignInPost(t *testing.T) {
 		t.Errorf("unexpected session user email, want: %s, got: %s", testuser.Email, user.Email)
 	}
 
-	if rec.Code != http.StatusOK {
+	if rec.Code != http.StatusSeeOther {
 		t.Errorf("could not login user, status want %d got %d", http.StatusOK, rec.Code)
 	}
 }
