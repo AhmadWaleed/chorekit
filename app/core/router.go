@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ahmadwaleed/choreui/app/core/errors"
+	"github.com/ahmadwaleed/choreui/app/core/view"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/gorilla/sessions"
@@ -41,7 +42,7 @@ func NewRouter(app *Application) *echo.Echo {
 	e.HTTPErrorHandler = httpErrHandler
 
 	// Add html templates with go template syntax
-	e.Renderer = NewTemplate(app.Config())
+	e.Renderer = view.NewTemplate(app.Config())
 
 	return e
 }

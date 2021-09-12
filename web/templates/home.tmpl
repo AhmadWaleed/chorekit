@@ -2,8 +2,13 @@
 
 {{define "header"}}
     <h1>Home<h1>
+    {{ Lang "My text" }}
 {{end}}
 
 {{define "content"}}
+    {{if .auth}}
+    {{.user.name}}
+    <p>Logged in.</p>
+    {{end}}
     <p>Welcome home.</p>
 {{end}}

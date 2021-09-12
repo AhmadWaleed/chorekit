@@ -17,7 +17,7 @@ type User struct {
 }
 
 type UserModel interface {
-	First(m *User) error
+	First(m *User, conds ...interface{}) error
 	Find(m *[]User) error
 	Create(m *User) error
 	Ping() error
@@ -28,8 +28,8 @@ type MysqlUserModel struct {
 	DB *gorm.DB
 }
 
-func (m *MysqlUserModel) First(u *User) error {
-	return m.DB.First(u).Error
+func (m *MysqlUserModel) First(u *User, conds ...interface{}) error {
+	return m.DB.First(u, conds...).Error
 }
 
 func (m *MysqlUserModel) Create(u *User) error {
