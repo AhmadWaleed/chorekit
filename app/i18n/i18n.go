@@ -1,8 +1,6 @@
 package i18n
 
 import (
-	"fmt"
-
 	gotext "gopkg.in/leonelquinteros/gotext.v1"
 )
 
@@ -25,6 +23,5 @@ func (i *I18n) Get(str string, vars ...interface{}) string {
 }
 
 func Get(str string, vars ...interface{}) string {
-	fmt.Println(gotext.Get(str, vars...), "......")
 	return gotext.Get(str, vars...)
 }

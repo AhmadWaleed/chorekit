@@ -1,0 +1,88 @@
+package session
+
+import (
+	"encoding/gob"
+
+	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
+)
+
+func init() {
+	gob.Register(database.User{})
+	gob.Register(Flash{})
+}
+
+type (
+	OptionFunc       = func(sess *sessions.Session)
+	SessionStoreFunc = func(c echo.Context) *SessionStore
+)
+
+var (
+	// FlashError is a tailwindcss class
+	FlashError = "error"
+	// FlashSuccess is a tailwindcss class
+	FlashSuccess = "success"
+	// FlashInfo is a tailwindcss class
+	FlashInfo = "info"
+	// FlashWarning is a tailwindcss class
+	FlashWarning = "warning"
+)
+
+type Flash struct {
+	Message string
+	Type    string
+}
+
+type SessionStore struct {
+	ctx     echo.Context
+	Session *sessions.Session
+}
+
+func (s *SessionStore) Save() error {
+	return s.Session.Save(s.ctx.Request(), s.ctx.Response())
+}
+
+func (s *SessionStore) Put(key interface{}, val interface{}) {
+	s.Session.Values[key] = val
+}
+
+func (s *SessionStore) Get(key interface{}) interface{} {
+	return s.Session.Values[key]
+}
+
+func (s *SessionStore) GetBool(key interface{}) bool {
+	if _, ok := s.Get(key).(bool); ok {
+		return true
+	}
+
+	return false
+}
+
+func (s *SessionStore) FlashError(msg string) {
+	s.Session.AddFlash(Flash{
+		Message: msg,
+		Type:    FlashError,
+	})
+	s.Save()
+}
+
+func (s *SessionStore) Authenticate(user database.User, opts ...OptionFunc) error {
+	for _, opt := range opts {
+		opt(s.Session)
+	}
+
+	s.Session.Values["Auth"] = true
+	s.Session.Values["User"] = user
+
+	return s.Save()
+}
+
+func NewSessionStoreFunc(ctx echo.Context) *SessionStore {
+	sess, err := session.Get("session", ctx)
+	if err != nil {
+		ctx.Logger().Errorf("could not get session: %v", err)
+	}
+	return &SessionStore{ctx, sess}
+}

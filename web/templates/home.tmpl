@@ -6,8 +6,8 @@
 {{end}}
 
 {{define "content"}}
-    {{if .auth}}
-    {{.user.name}}
+    {{if .Auth}}
+    {{.User}}
     <p>Logged in.</p>
     {{end}}
     <p>Welcome home.</p>

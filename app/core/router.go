@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ahmadwaleed/choreui/app/core/errors"
+	sess "github.com/ahmadwaleed/choreui/app/core/session"
 	"github.com/ahmadwaleed/choreui/app/core/view"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
@@ -18,9 +19,10 @@ func NewRouter(app *Application) *echo.Echo {
 	e := echo.New()
 
 	e.Use(AppCtxMiddleware(&AppContext{
-		App:   app,
-		Loc:   i18n.New(),
-		Store: database.NewStoreFunc,
+		App:          app,
+		Loc:          i18n.New(),
+		Store:        database.NewStoreFunc,
+		SessionStore: sess.NewSessionStoreFunc,
 	}))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(app.config.AppKey))))
 

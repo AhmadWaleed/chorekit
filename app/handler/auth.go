@@ -1,15 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
-	"github.com/ahmadwaleed/choreui/app/core/view"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,7 +21,7 @@ func SignupGet(c echo.Context) error {
 
 func SignupPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
-	sess, _ := session.Get("session", ctx)
+	sess := ctx.SessionStore(c)
 
 	type user struct {
 		Name     string `form:"name" validate:"required"`
@@ -35,12 +32,8 @@ func SignupPost(c echo.Context) error {
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
 		c.Logger().Error(err)
-		sess.AddFlash(view.Flash{
-			Message: http.StatusText(http.StatusBadRequest),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
-		return c.Render(http.StatusUnprocessableEntity, "auth/login", map[string]string{
+		sess.FlashError(http.StatusText(http.StatusBadRequest))
+		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
 			"name":  usr.Name,
 			"email": usr.Email,
 		})
@@ -48,14 +41,9 @@ func SignupPost(c echo.Context) error {
 
 	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
 		c.Logger().Error(errs)
-
 		for _, err := range errs {
-			sess.AddFlash(view.Flash{
-				Message: err,
-				Type:    view.FlashError,
-			})
+			sess.FlashError(err)
 		}
-		sess.Save(c.Request(), c.Response())
 		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
 			"name":  usr.Name,
 			"email": usr.Email,
@@ -65,11 +53,7 @@ func SignupPost(c echo.Context) error {
 	hash, err := core.NewHasher().Generate(usr.Password)
 	if err != nil {
 		c.Logger().Error(err)
-		sess.AddFlash(view.Flash{
-			Message: fmt.Sprintf("%s: %v", errors.ErrorText(errors.EntityCreationError), err),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
+		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
 		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
 			"name":  usr.Name,
 			"email": usr.Email,
@@ -84,11 +68,7 @@ func SignupPost(c echo.Context) error {
 	}
 
 	if err == nil {
-		sess.AddFlash(view.Flash{
-			Message: errors.ErrorText(errors.DeplicateUserFound),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
+		sess.FlashError(errors.ErrorText(errors.DeplicateUserFound))
 		return c.Render(http.StatusOK, "auth/signup", map[string]string{
 			"name":  usr.Name,
 			"email": usr.Email,
@@ -103,11 +83,7 @@ func SignupPost(c echo.Context) error {
 
 	if err != nil {
 		c.Logger().Error(err)
-		sess.AddFlash(view.Flash{
-			Message: errors.ErrorText(errors.EntityCreationError),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
+		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
 		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
 			"name":  usr.Name,
 			"email": usr.Email,
@@ -123,7 +99,7 @@ func SignInGet(c echo.Context) error {
 
 func SignInPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
-	sess, _ := session.Get("session", ctx)
+	sess := ctx.SessionStore(c)
 
 	type user struct {
 		Email    string `form:"email" validate:"required,email"`
@@ -132,13 +108,8 @@ func SignInPost(c echo.Context) error {
 
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
-		sess.AddFlash(view.Flash{
-			Message: http.StatusText(http.StatusBadRequest),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
-
-		return c.Render(http.StatusUnprocessableEntity, "auth/login", map[string]string{
+		sess.FlashError(http.StatusText(http.StatusBadRequest))
+		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
 			"email": usr.Email,
 		})
 	}
@@ -146,13 +117,9 @@ func SignInPost(c echo.Context) error {
 	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
 		c.Logger().Error(errs)
 		for _, err := range errs {
-			sess.AddFlash(view.Flash{
-				Message: err,
-				Type:    view.FlashError,
-			})
+			sess.FlashError(err)
 		}
-		sess.Save(c.Request(), c.Response())
-		return c.Render(http.StatusUnprocessableEntity, "auth/login", map[string]string{
+		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
 			"email": usr.Email,
 		})
 	}
@@ -160,39 +127,23 @@ func SignInPost(c echo.Context) error {
 	store := ctx.Store(ctx.App.DB())
 	dbuser := new(database.User)
 	if err := store.User.First(dbuser); err != nil {
-		sess.AddFlash(view.Flash{
-			Message: errors.ErrorText(errors.UserNotFound),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
-
-		return c.Render(http.StatusUnprocessableEntity, "auth/login", map[string]string{
+		sess.FlashError(errors.ErrorText(errors.UserNotFound))
+		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
 			"email": usr.Email,
 		})
 	}
 
-	sess, err := session.Get("session", c)
-	if err != nil {
-		c.Logger().Error(err)
-		sess.AddFlash(view.Flash{
-			Message: http.StatusText(http.StatusInternalServerError),
-			Type:    view.FlashError,
-		})
-		sess.Save(c.Request(), c.Response())
-
-		return c.Render(http.StatusInternalServerError, "auth/login", map[string]string{
-			"email": usr.Email,
-		})
+	if err := sess.Authenticate(*dbuser, func(s *sessions.Session) {
+		s.Options = &sessions.Options{
+			Domain:   "localhost",
+			Path:     "/",
+			MaxAge:   3600 * 8,
+			HttpOnly: true,
+			Secure:   false,
+		}
+	}); err != nil {
+		return err
 	}
-
-	sess.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400 * 7,
-		HttpOnly: true,
-	}
-	sess.Values["auth"] = true
-	sess.Values["user"] = dbuser
-	sess.Save(c.Request(), c.Response())
 
 	return c.Redirect(http.StatusSeeOther, "/home")
 }
