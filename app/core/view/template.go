@@ -48,19 +48,8 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 		return fmt.Errorf("could not parse template files: %v", err)
 	}
 
-	sess := session.NewSessionStoreFunc(c)
-	flashes := sess.Session.Flashes()
-	t.Vars["flashes"] = make([]session.Flash, len(flashes))
-	if len(flashes) > 0 {
-		for i, f := range flashes {
-			switch f.(type) {
-			case session.Flash:
-				t.Vars["flashes"].([]session.Flash)[i] = f.(session.Flash)
-			default:
-				t.Vars["flashes"].([]session.Flash)[i] = session.Flash{Message: f.(string), Type: session.FlashInfo}
-			}
-		}
-	}
+	sess := session.NewSessionStore(c)
+	t.Vars["flashes"] = sess.Flashes()
 
 	t.Vars["data"] = data
 

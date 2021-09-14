@@ -1,9 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/ahmadwaleed/choreui/app/core/errors"
 	sess "github.com/ahmadwaleed/choreui/app/core/session"
 	"github.com/ahmadwaleed/choreui/app/core/view"
 	"github.com/ahmadwaleed/choreui/app/database"
@@ -22,7 +22,7 @@ func NewRouter(app *Application) *echo.Echo {
 		App:          app,
 		Loc:          i18n.New(),
 		Store:        database.NewStoreFunc,
-		SessionStore: sess.NewSessionStoreFunc,
+		SessionStore: sess.NewSessionStore,
 	}))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(app.config.AppKey))))
 
@@ -55,15 +55,16 @@ func httpErrHandler(err error, c echo.Context) {
 
 	switch v := err.(type) {
 	case *echo.HTTPError:
-		err := c.JSON(v.Code, v)
-		if err != nil {
-			c.Logger().Error("error handler: json encoding", err)
+		errpage := fmt.Sprintf("web/templates/errors/%d.html", v.Code)
+		if err := c.File(errpage); err != nil {
+			c.Logger().Error(err)
 		}
+		c.Logger().Error(err)
 	default:
-		e := errors.NewBoom(errors.InternalError, "Bad implementation", nil)
-		err := c.JSON(code, e)
-		if err != nil {
-			c.Logger().Error("error handler: json encoding", err)
+		errpage := fmt.Sprintf("web/templates/errors/%d.html", code)
+		if err := c.File(errpage); err != nil {
+			c.Logger().Error(err)
 		}
+		c.Logger().Error(err)
 	}
 }

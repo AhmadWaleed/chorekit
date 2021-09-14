@@ -36,8 +36,8 @@ type Flash struct {
 }
 
 type SessionStore struct {
-	ctx     echo.Context
-	Session *sessions.Session
+	*sessions.Session
+	ctx echo.Context
 }
 
 func (s *SessionStore) Save() error {
@@ -68,6 +68,23 @@ func (s *SessionStore) FlashError(msg string) {
 	s.Save()
 }
 
+func (s *SessionStore) Flashes() []Flash {
+	flashes := s.Session.Flashes()
+	fm := make([]Flash, len(flashes))
+	if len(flashes) > 0 {
+		for i, f := range flashes {
+			switch f.(type) {
+			case Flash:
+				fm[i] = f.(Flash)
+			default:
+				fm[i] = Flash{Message: f.(string), Type: FlashInfo}
+			}
+		}
+	}
+
+	return fm
+}
+
 func (s *SessionStore) Authenticate(user database.User, opts ...OptionFunc) error {
 	for _, opt := range opts {
 		opt(s.Session)
@@ -79,10 +96,10 @@ func (s *SessionStore) Authenticate(user database.User, opts ...OptionFunc) erro
 	return s.Save()
 }
 
-func NewSessionStoreFunc(ctx echo.Context) *SessionStore {
+func NewSessionStore(ctx echo.Context) *SessionStore {
 	sess, err := session.Get("session", ctx)
 	if err != nil {
 		ctx.Logger().Errorf("could not get session: %v", err)
 	}
-	return &SessionStore{ctx, sess}
+	return &SessionStore{sess, ctx}
 }

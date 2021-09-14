@@ -22,6 +22,7 @@ func SignupGet(c echo.Context) error {
 func SignupPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	sess := ctx.SessionStore(c)
+	sess.Flashes()
 
 	type user struct {
 		Name     string `form:"name" validate:"required"`
@@ -33,10 +34,7 @@ func SignupPost(c echo.Context) error {
 	if err := c.Bind(usr); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(http.StatusText(http.StatusBadRequest))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
-			"name":  usr.Name,
-			"email": usr.Email,
-		})
+		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
@@ -44,20 +42,14 @@ func SignupPost(c echo.Context) error {
 		for _, err := range errs {
 			sess.FlashError(err)
 		}
-		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
-			"name":  usr.Name,
-			"email": usr.Email,
-		})
+		return c.Render(http.StatusOK, "auth/signup", nil)
 	}
 
 	hash, err := core.NewHasher().Generate(usr.Password)
 	if err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
-			"name":  usr.Name,
-			"email": usr.Email,
-		})
+		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	store := ctx.Store(ctx.App.DB())
@@ -69,10 +61,7 @@ func SignupPost(c echo.Context) error {
 
 	if err == nil {
 		sess.FlashError(errors.ErrorText(errors.DeplicateUserFound))
-		return c.Render(http.StatusOK, "auth/signup", map[string]string{
-			"name":  usr.Name,
-			"email": usr.Email,
-		})
+		return c.Render(http.StatusOK, "auth/signup", nil)
 	}
 
 	err = store.User.Create(&database.User{
@@ -84,10 +73,7 @@ func SignupPost(c echo.Context) error {
 	if err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signup", map[string]string{
-			"name":  usr.Name,
-			"email": usr.Email,
-		})
+		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/auth/signin")

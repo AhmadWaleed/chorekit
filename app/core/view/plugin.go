@@ -16,7 +16,7 @@ func I18nPlugin() template.FuncMap {
 }
 
 func SessionPlugin(c echo.Context) template.FuncMap {
-	sess := session.NewSessionStoreFunc(c)
+	sess := session.NewSessionStore(c)
 	return template.FuncMap{
 		"Auth": func() bool {
 			return sess.GetBool("Auth")
@@ -26,12 +26,13 @@ func SessionPlugin(c echo.Context) template.FuncMap {
 		},
 		"Old": func(name string) string {
 			data, err := c.FormParams()
-			c.Logger().Error(err)
-			if val, ok := data[name]; !ok {
+			if err != nil {
+				c.Logger().Error(err)
+			}
+			if val, ok := data[name]; ok {
 				if len(val) == 0 {
 					return ""
 				}
-
 				return val[0]
 			}
 
