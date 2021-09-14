@@ -57,14 +57,12 @@ func httpErrHandler(err error, c echo.Context) {
 	case *echo.HTTPError:
 		errpage := fmt.Sprintf("web/templates/errors/%d.html", v.Code)
 		if err := c.File(errpage); err != nil {
-			c.Logger().Error(err)
+			c.Logger().Error(err, v)
 		}
-		c.Logger().Error(err)
 	default:
 		errpage := fmt.Sprintf("web/templates/errors/%d.html", code)
 		if err := c.File(errpage); err != nil {
-			c.Logger().Error(err)
+			c.Logger().Error(err, v)
 		}
-		c.Logger().Error(err)
 	}
 }

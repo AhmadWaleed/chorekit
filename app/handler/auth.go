@@ -22,7 +22,6 @@ func SignupGet(c echo.Context) error {
 func SignupPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	sess := ctx.SessionStore(c)
-	sess.Flashes()
 
 	type user struct {
 		Name     string `form:"name" validate:"required"`
@@ -132,4 +131,12 @@ func SignInPost(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/home")
+}
+
+func Signout(c echo.Context) error {
+	ctx := c.(*core.AppContext)
+	sess := ctx.SessionStore(ctx)
+	sess.Logout()
+
+	return c.Redirect(http.StatusSeeOther, "/auth/signin")
 }

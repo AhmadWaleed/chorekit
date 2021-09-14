@@ -81,7 +81,7 @@ func (s *SessionStore) Flashes() []Flash {
 			}
 		}
 	}
-
+	s.Save()
 	return fm
 }
 
@@ -94,6 +94,12 @@ func (s *SessionStore) Authenticate(user database.User, opts ...OptionFunc) erro
 	s.Session.Values["User"] = user
 
 	return s.Save()
+}
+
+func (s *SessionStore) Logout() {
+	delete(s.Values, "Auth")
+	delete(s.Values, "User")
+	s.Save()
 }
 
 func NewSessionStore(ctx echo.Context) *SessionStore {

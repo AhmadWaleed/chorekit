@@ -22,16 +22,17 @@ func main() {
 	app.ServeStaticFiles()
 
 	// root routes
-	app.Echo.GET("/home", handler.Home)
+	app.Echo.GET("/home", handler.Home, core.AuthMiddleware())
+	app.Echo.GET("/signout", handler.Signout, core.AuthMiddleware())
 
 	// auth endpoints
-	auth := app.Echo.Group("/auth")
+	auth := app.Echo.Group("/auth", core.GuestMiddleware())
 	auth.GET("/signup", handler.SignupGet)
 	auth.POST("/signup", handler.SignupPost)
 	auth.GET("/signin", handler.SignInGet)
 	auth.POST("/signin", handler.SignInPost)
 
-	host := app.Echo.Group("/servers")
+	host := app.Echo.Group("/servers", core.AuthMiddleware())
 	host.GET("/create", handler.CreateServerGet)
 	host.POST("/create", handler.CreateServerPost)
 
