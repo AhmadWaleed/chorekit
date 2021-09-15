@@ -41,7 +41,7 @@ func SignupPost(c echo.Context) error {
 		for _, err := range errs {
 			sess.FlashError(err)
 		}
-		return c.Render(http.StatusOK, "auth/signup", nil)
+		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	hash, err := core.NewHasher().Generate(usr.Password)
@@ -57,10 +57,9 @@ func SignupPost(c echo.Context) error {
 	if err != nil {
 		c.Logger().Error(err)
 	}
-
 	if err == nil {
 		sess.FlashError(errors.ErrorText(errors.DeplicateUserFound))
-		return c.Render(http.StatusOK, "auth/signup", nil)
+		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	err = store.User.Create(&database.User{

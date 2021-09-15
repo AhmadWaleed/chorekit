@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -8,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/ahmadwaleed/choreui/app/core"
+	"github.com/ahmadwaleed/choreui/app/core/session"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"gorm.io/gorm"
 )
 
@@ -22,9 +23,7 @@ var testuser = User{
 
 type UserFakeStore struct{}
 
-func (s *UserFakeStore) First(m *database.User) error {
-	m.Name = testuser.Name
-	m.Email = testuser.Email
+func (s *UserFakeStore) First(m *database.User, conds ...interface{}) error {
 	return nil
 }
 func (s *UserFakeStore) Find(m *[]database.User) error {
@@ -34,6 +33,24 @@ func (s *UserFakeStore) Create(m *database.User) error {
 	return nil
 }
 func (s *UserFakeStore) Ping() error {
+	return nil
+}
+
+type DuplicateUserStore struct {
+	*UserFakeStore
+}
+
+func (s *DuplicateUserStore) First(m *database.User, conds ...interface{}) error {
+	return errors.New("Duplicate user email.")
+}
+
+type RegisteredUserStore struct {
+	*UserFakeStore
+}
+
+func (s *RegisteredUserStore) First(m *database.User, conds ...interface{}) error {
+	m.Name = testuser.Name
+	m.Email = testuser.Email
 	return nil
 }
 
@@ -83,8 +100,9 @@ func TestSignupPost(t *testing.T) {
 		App: e.app,
 		Loc: i18n.New(),
 		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{&UserFakeStore{}, nil}
+			return &database.Store{User: &DuplicateUserStore{}, Server: nil}
 		},
+		SessionStore: session.NewSessionStore,
 	}
 
 	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
@@ -123,8 +141,9 @@ func TestSignInPost(t *testing.T) {
 		App: e.app,
 		Loc: i18n.New(),
 		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{&UserFakeStore{}, nil}
+			return &database.Store{User: &RegisteredUserStore{}, Server: nil}
 		},
+		SessionStore: session.NewSessionStore,
 	}
 
 	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
@@ -136,25 +155,18 @@ func TestSignInPost(t *testing.T) {
 
 	e.app.Echo.ServeHTTP(rec, req)
 
-	sess, err := session.Get("session", cc.Context)
-	if err != nil {
-		t.Errorf("could not get login session: %v", err)
-	}
+	sess := cc.SessionStore(cc.Context)
 
-	if _, ok := sess.Values["auth"]; !ok {
+	if !sess.GetBool("Auth") {
 		t.Error("could not get login value from session store")
 	}
 
-	login := (sess.Values["auth"]).(bool)
-	if !login {
+	login := sess.GetBool("Auth")
+	if !sess.GetBool("Auth") {
 		t.Errorf("unexpected session auth value, want: %t, got: %t", true, login)
 	}
 
-	if _, ok := sess.Values["user"]; !ok {
-		t.Error("could not get user struct from session store")
-	}
-
-	user := (sess.Values["user"]).(User)
+	user := (sess.Values["User"]).(database.User)
 	if user.Email != testuser.Email {
 		t.Errorf("unexpected session user email, want: %s, got: %s", testuser.Email, user.Email)
 	}
