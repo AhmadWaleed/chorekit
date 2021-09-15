@@ -20,13 +20,13 @@ type (
 )
 
 var (
-	// FlashError is a tailwindcss class
-	FlashError = "error"
-	// FlashSuccess is a tailwindcss class
+	// FlashError is a bootstrap 5 class
+	FlashError = "danger"
+	// FlashSuccess is a bootstrap 5 class
 	FlashSuccess = "success"
-	// FlashInfo is a tailwindcss class
+	// FlashInfo is a bootstrap 5 class
 	FlashInfo = "info"
-	// FlashWarning is a tailwindcss class
+	// FlashWarning is a bootstrap 5 class
 	FlashWarning = "warning"
 )
 

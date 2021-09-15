@@ -9,47 +9,37 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type (
-	Server struct {
-		Name          string `form:"name" validate:"required"`
-		IP            string `form:"name" validate:"required"`
-		User          string `form:"email" validate:"required"`
-		Port          int    `form:"email" validate:"required"`
-		SSHPublicKey  string
-		SSHPrivateKey string
-		Status        string
-	}
-
-	HostViewModel struct {
-		Server Server
-		Errors []string
-	}
-)
+type Server struct {
+	Name          string `form:"name" validate:"required"`
+	IP            string `form:"name" validate:"required"`
+	User          string `form:"email" validate:"required"`
+	Port          int    `form:"email" validate:"required"`
+	SSHPublicKey  string
+	SSHPrivateKey string
+	Status        string
+}
 
 func CreateServerGet(c echo.Context) error {
-	return c.Render(http.StatusOK, "base.server/create", nil)
+	return c.Render(http.StatusOK, "server/create", nil)
 }
 
 func CreateServerPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
-	_ = ctx
+	sess := ctx.SessionStore(ctx)
 
 	srv := new(Server)
 	if err := c.Bind(srv); err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
-			Server: *srv,
-			Errors: []string{http.StatusText(http.StatusBadRequest)},
-		})
+		sess.FlashError(http.StatusText(http.StatusBadRequest))
+		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
 	}
 
 	if errs := ctx.App.Validator.Validate(srv); len(errs) > 0 {
 		c.Logger().Error(errs)
-
-		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
-			Server: *srv,
-			Errors: errs,
-		})
+		for _, err := range errs {
+			sess.FlashError(err)
+		}
+		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
 	}
 
 	store := ctx.Store(ctx.App.DB())
@@ -62,11 +52,9 @@ func CreateServerPost(c echo.Context) error {
 	})
 	if err != nil {
 		c.Logger().Error(err)
-		return c.Render(http.StatusUnprocessableEntity, "base.server/create", HostViewModel{
-			Server: *srv,
-			Errors: []string{errors.ErrorText(errors.EntityCreationError)},
-		})
+		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
+		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
 	}
 
-	return c.Render(http.StatusOK, "base.server/create", nil)
+	return c.Render(http.StatusOK, "server/create", nil)
 }

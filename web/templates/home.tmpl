@@ -1,14 +1,5 @@
 {{define "title"}}Home{{end}}
 
-{{define "header"}}
-    <h1>Home<h1>
-    {{ Lang "My text" }}
-{{end}}
-
 {{define "content"}}
-    {{if .Auth}}
-    {{.User}}
-    <p>Logged in.</p>
-    {{end}}
-    <p>Welcome home.</p>
+<h4 class="mb-3">Dashboard</h4>
 {{end}}
