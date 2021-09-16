@@ -28,7 +28,7 @@ type Server struct {
 }
 
 type ServerModel interface {
-	First(m *Server) error
+	First(m *Server, conds ...interface{}) error
 	Find(m *[]Server) error
 	Create(m *Server) error
 	Update(m *Server) error
@@ -39,8 +39,8 @@ type MysqlServerModel struct {
 	DB *gorm.DB
 }
 
-func (m *MysqlServerModel) First(h *Server) error {
-	return m.DB.First(h).Error
+func (m *MysqlServerModel) First(h *Server, conds ...interface{}) error {
+	return m.DB.First(h, conds...).Error
 }
 
 func (m *MysqlServerModel) Create(h *Server) error {

@@ -35,6 +35,8 @@ func main() {
 	host := app.Echo.Group("/servers", core.AuthMiddleware())
 	host.GET("/create", handler.CreateServerGet)
 	host.POST("/create", handler.CreateServerPost)
+	host.GET("/index", handler.IndexServer)
+	host.GET("/:id", handler.ShowServer)
 
 	// api endpoints
 	// g := app.Echo.Group("/api")
@@ -49,9 +51,8 @@ func main() {
 	// app.Echo.GET("/.well-known/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	// migration for dev
-	user := database.User{Name: "Peter"}
 	mr := app.ModelRegistry()
-	if err := mr.Register(user); err != nil {
+	if err := mr.Register(database.User{}, database.Server{}); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 
@@ -62,8 +63,6 @@ func main() {
 	if err := mr.AutoMigrateAll(); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
-
-	mr.Create(&user)
 
 	// Start server
 	go func() {
