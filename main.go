@@ -32,6 +32,12 @@ func main() {
 	auth.GET("/signin", handler.SignInGet)
 	auth.POST("/signin", handler.SignInPost)
 
+	task := app.Echo.Group("/tasks")
+	task.GET("/create", handler.CreateTaskGet)
+	task.POST("/create", handler.CreateTaskPost)
+	task.GET("/index", handler.TaskIndex)
+	task.GET("/show/:id", handler.ShowTask)
+
 	host := app.Echo.Group("/servers", core.AuthMiddleware())
 	host.GET("/create", handler.CreateServerGet)
 	host.POST("/create", handler.CreateServerPost)
@@ -52,7 +58,7 @@ func main() {
 
 	// migration for dev
 	mr := app.ModelRegistry()
-	if err := mr.Register(database.User{}, database.Server{}); err != nil {
+	if err := mr.Register(database.User{}, database.Server{}, database.Task{}); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 
@@ -61,6 +67,10 @@ func main() {
 	}
 
 	if err := mr.AutoMigrateAll(); err != nil {
+		app.Echo.Logger.Fatal(err)
+	}
+
+	if err := mr.Register(database.User{}, database.Server{}, database.Task{}); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 

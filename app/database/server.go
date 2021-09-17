@@ -30,6 +30,7 @@ type Server struct {
 type ServerModel interface {
 	First(m *Server, conds ...interface{}) error
 	Find(m *[]Server) error
+	FindMany(m *[]Server, ids []int) error
 	Create(m *Server) error
 	Update(m *Server) error
 	Ping() error
@@ -49,6 +50,10 @@ func (m *MysqlServerModel) Create(h *Server) error {
 
 func (m *MysqlServerModel) Find(h *[]Server) error {
 	return m.DB.Find(h).Error
+}
+
+func (m *MysqlServerModel) FindMany(h *[]Server, ids []int) error {
+	return m.DB.Where("ID IN ?", ids).Find(h).Error
 }
 
 func (m *MysqlServerModel) Update(h *Server) error {

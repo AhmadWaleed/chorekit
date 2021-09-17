@@ -68,6 +68,22 @@ func (s *SessionStore) FlashError(msg string) {
 	s.Save()
 }
 
+func (s *SessionStore) FlashWarning(msg string) {
+	s.Session.AddFlash(Flash{
+		Message: msg,
+		Type:    FlashWarning,
+	})
+	s.Save()
+}
+
+func (s *SessionStore) FlashSuccess(msg string) {
+	s.Session.AddFlash(Flash{
+		Message: msg,
+		Type:    FlashSuccess,
+	})
+	s.Save()
+}
+
 func (s *SessionStore) Flashes() []Flash {
 	flashes := s.Session.Flashes()
 	fm := make([]Flash, len(flashes))

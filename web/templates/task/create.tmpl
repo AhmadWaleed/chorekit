@@ -1,0 +1,35 @@
+{{define "title"}}Create Task{{end}}
+
+{{define "content"}}
+<h4 class="mb-3">Create new task</h4>
+<form action="/tasks/create" method="POST">
+    <div class="row g-3">
+    <div class="col-12">
+        <label for="name" class="form-label">Select remote server</label>
+        <select class="form-select" multiple name="servers" aria-label="Default select example">
+            {{range .data}}
+                <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
+        </select>
+    </div>
+    
+    <div class="col-12">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" name="name" class="form-control" id="name" placeholder="My Server">
+    </div>
+
+    <div class="col-12">
+        <label for="env" class="form-label">Environment</label>
+        <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true"></textarea>
+    </div>
+
+    <div class="col-12">
+        <label for="script" class="form-label">Script</label>
+        <textarea type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main"></textarea>
+    </div>
+
+    <hr class="my-4">
+
+    <button class="w-100 btn btn-primary btn-lg" type="submit">Create Task</button>
+</form>
+{{end}}

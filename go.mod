@@ -3,6 +3,7 @@ module github.com/ahmadwaleed/choreui
 go 1.16
 
 require (
+	github.com/ahmadwaleed/chore v1.0.0 // indirect
 	github.com/caarlos0/env v3.5.0+incompatible // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
