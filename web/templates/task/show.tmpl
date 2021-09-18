@@ -1,14 +1,21 @@
 {{define "title"}}Show Task{{end}}
 
 {{define "content"}}
-<h4 class="mb-3">Task Detail</h4>
-<form action="/tasks/create" method="POST">
+<div class="row mb-3">
+    <div class="col-8">
+        <h4 class="">Task Detail</h4>
+    </div>
+    <div class="col-4">
+        <button class="w-100 btn btn-success btn-md" type="submit">Run Task</button>
+    </div>
+</div>
+<form action="/tasks/update/{{.data.ID}}" method="POST">
     <div class="row g-3">
     <div class="col-12">
         <label for="name" class="form-label">On servers</label>
         <select class="form-select" multiple name="servers" aria-label="Default select example">
             {{range .data.Servers}}
-                <option value="{{.ID}}">{{.Name}}</option>
+                <option selected value="{{.ID}}">{{.Name}}</option>
             {{end}}
         </select>
     </div>
@@ -20,16 +27,33 @@
 
     <div class="col-12">
         <label for="env" class="form-label">Environment</label>
-        <textarea type="text" name="env" value="{{.data.Env}}" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true"></textarea>
+        <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true">{{.data.Env}}</textarea>
     </div>
 
     <div class="col-12">
         <label for="script" class="form-label">Script</label>
-        <textarea type="text" name="script" value="{{.data.Script}}" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main"></textarea>
+        <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main">{{.data.Script}}</textarea>
+        <div style="height: 300px; width: 100%"  id="editor"/>
     </div>
 
     <hr class="my-4">
 
     <button class="w-100 btn btn-primary btn-lg" type="submit">Update Task</button>
 </form>
+{{end}}
+
+{{define "scripts"}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+        const editor = ace.edit("editor");
+        const textarea = document.querySelector('textarea[name="script"]')
+
+        editor.setTheme("ace/theme/github");
+        editor.setShowPrintMargin(false);
+        editor.session.setMode("ace/mode/sh");
+        editor.getSession().setValue(textarea.value);
+        editor.getSession().on('change', () => {
+            textarea.value = editor.getSession().getValue()
+        });
+    </script>
 {{end}}

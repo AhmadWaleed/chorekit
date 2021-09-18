@@ -7,6 +7,7 @@ import (
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/handler"
+	"github.com/labstack/echo/v4"
 	// "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -21,36 +22,8 @@ func main() {
 	// serve files for dev
 	app.ServeStaticFiles()
 
-	// root routes
-	app.Echo.GET("/home", handler.Home, core.AuthMiddleware())
-	app.Echo.GET("/signout", handler.Signout, core.AuthMiddleware())
-
-	// auth endpoints
-	auth := app.Echo.Group("/auth", core.GuestMiddleware())
-	auth.GET("/signup", handler.SignupGet)
-	auth.POST("/signup", handler.SignupPost)
-	auth.GET("/signin", handler.SignInGet)
-	auth.POST("/signin", handler.SignInPost)
-
-	task := app.Echo.Group("/tasks")
-	task.GET("/create", handler.CreateTaskGet)
-	task.POST("/create", handler.CreateTaskPost)
-	task.GET("/index", handler.TaskIndex)
-	task.GET("/show/:id", handler.ShowTask)
-
-	host := app.Echo.Group("/servers", core.AuthMiddleware())
-	host.GET("/create", handler.CreateServerGet)
-	host.POST("/create", handler.CreateServerPost)
-	host.GET("/index", handler.IndexServer)
-	host.GET("/:id", handler.ShowServer)
-
-	// api endpoints
-	// g := app.Echo.Group("/api")
-	// g.GET("/users/:id", handler.GetUserJSON)
-
-	// // pages
-	// u := app.Echo.Group("/users")
-	// u.GET("/:id", handler.GetUser)
+	// register application routes
+	RegisterRoutes(app.Echo)
 
 	// metric / health endpoint according to RFC 5785
 	app.Echo.GET("/.well-known/health-check", handler.GetHealthcheck)
@@ -58,7 +31,7 @@ func main() {
 
 	// migration for dev
 	mr := app.ModelRegistry()
-	if err := mr.Register(database.User{}, database.Server{}, database.Task{}); err != nil {
+	if err := mr.Register(database.User{}, database.Server{}, database.Task{}, database.Run{}); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 
@@ -82,4 +55,30 @@ func main() {
 	}()
 
 	app.GracefulShutdown()
+}
+
+func RegisterRoutes(e *echo.Echo) {
+	// root routes
+	e.GET("/home", handler.Home, core.AuthMiddleware()).Name = "home"
+	e.GET("/signout", handler.Signout, core.AuthMiddleware()).Name = "logout"
+
+	// auth endpoints
+	auth := e.Group("/auth", core.GuestMiddleware())
+	auth.GET("/signup", handler.SignupGet).Name = "signup.get"
+	auth.POST("/signup", handler.SignupPost).Name = "signup.post"
+	auth.GET("/signin", handler.SignInGet).Name = "sigin.get"
+	auth.POST("/signin", handler.SignInPost).Name = "sigin.post"
+
+	task := e.Group("/tasks")
+	task.GET("/create", handler.CreateTaskGet).Name = "task.create.get"
+	task.POST("/create", handler.CreateTaskPost).Name = "task.create.post"
+	task.GET("/index", handler.TaskIndex).Name = "task.index"
+	task.GET("/show/:id", handler.ShowTask).Name = "task.show"
+	task.POST("/update/:id", handler.UpdateTask).Name = "task.update"
+
+	server := e.Group("/servers", core.AuthMiddleware())
+	server.GET("/create", handler.CreateServerGet).Name = "server.create.get"
+	server.POST("/create", handler.CreateServerPost).Name = "server.create.post"
+	server.GET("/index", handler.IndexServer).Name = "server.index"
+	server.GET("/show/:id", handler.ShowServer).Name = "server.show"
 }

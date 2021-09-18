@@ -1,6 +1,7 @@
 package database
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -10,12 +11,24 @@ import (
 type Task struct {
 	ID        uint
 	Servers   []Server `gorm:"many2many:task_servers;"`
-	Name      string   `sql:"type:varchar(30)"`
+	Runs      []Run
+	Name      string `sql:"type:varchar(30)"`
 	Env       string
 	Script    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (t *Task) EnvVar() map[string]string {
+	slice := strings.Split(t.Env, ";")
+	vars := make(map[string]string, len(slice))
+	for _, e := range vars {
+		env := strings.Split(e, "=")
+		vars[env[0]] = env[1]
+	}
+
+	return vars
 }
 
 type TaskServer struct {
@@ -27,7 +40,6 @@ type TaskModel interface {
 	Find(m *[]Task) error
 	Create(m *Task) error
 	Update(m *Task) error
-	Ping() error
 }
 
 type MysqlTaskModel struct {
@@ -52,13 +64,4 @@ func (m *MysqlTaskModel) FindMany(t *[]Task, ids []int) error {
 
 func (m *MysqlTaskModel) Update(t *Task) error {
 	return m.DB.Save(t).Error
-}
-
-func (m *MysqlTaskModel) Ping() error {
-	db, err := m.DB.DB()
-	if err != nil {
-		return err
-	}
-
-	return db.Ping()
 }

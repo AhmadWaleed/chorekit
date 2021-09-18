@@ -6,12 +6,21 @@ import (
 	"github.com/ahmadwaleed/choreui/app/core/session"
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 )
 
 func I18nPlugin() template.FuncMap {
 	return template.FuncMap{
 		"Lang": i18n.Get,
+	}
+}
+
+func RoutePlugin(c echo.Context) template.FuncMap {
+	return template.FuncMap{
+		"route": func(name string) string {
+			return utils.Route(c, name)
+		},
 	}
 }
 

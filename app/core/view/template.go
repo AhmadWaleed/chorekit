@@ -43,7 +43,12 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	includes = append(includes, layouts...)
 	includes = append(includes, t.Folder+string(os.PathSeparator)+name+"."+t.Extension)
 
-	templates, err := template.New(name).Funcs(I18nPlugin()).Funcs(SessionPlugin(c)).ParseFiles(includes...)
+	templates, err := template.New(name).
+		Funcs(I18nPlugin()).
+		Funcs(SessionPlugin(c)).
+		Funcs(RoutePlugin(c)).
+		ParseFiles(includes...)
+
 	if err != nil {
 		return fmt.Errorf("could not parse template files: %v", err)
 	}
