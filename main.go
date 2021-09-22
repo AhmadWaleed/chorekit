@@ -43,10 +43,6 @@ func main() {
 		app.Echo.Logger.Fatal(err)
 	}
 
-	if err := mr.Register(database.User{}, database.Server{}, database.Task{}); err != nil {
-		app.Echo.Logger.Fatal(err)
-	}
-
 	// Start server
 	go func() {
 		if err := app.Start(config.Address); err != nil {
@@ -75,6 +71,8 @@ func RegisterRoutes(e *echo.Echo) {
 	task.GET("/index", handler.TaskIndex).Name = "task.index"
 	task.GET("/show/:id", handler.ShowTask).Name = "task.show"
 	task.POST("/update/:id", handler.UpdateTask).Name = "task.update"
+	task.POST("/runs/:id", handler.RunTask).Name = "task.run"
+	task.GET("/runs/show/:id", handler.ShowRun).Name = "task.run.show"
 
 	server := e.Group("/servers", core.AuthMiddleware())
 	server.GET("/create", handler.CreateServerGet).Name = "server.create.get"

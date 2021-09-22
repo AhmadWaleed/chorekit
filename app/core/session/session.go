@@ -11,6 +11,7 @@ import (
 
 func init() {
 	gob.Register(database.User{})
+	gob.Register(database.Server{})
 	gob.Register(Flash{})
 }
 

@@ -101,7 +101,21 @@ func ShowTask(c echo.Context) error {
 	}
 	task.Script = strings.TrimSpace(task.Script)
 
-	return c.Render(http.StatusOK, "task/show", task)
+	var ids []int
+	for _, srv := range task.Servers {
+		ids = append(ids, int(srv.ID))
+	}
+
+	var servers []database.Server
+	if err := store.Server.FindMany(&servers, ids); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.Render(http.StatusOK, "task/show", map[string]interface{}{
+		"Task":    task,
+		"Servers": servers,
+	})
 }
 
 func UpdateTask(c echo.Context) error {

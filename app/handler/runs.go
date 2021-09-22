@@ -2,6 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +19,8 @@ import (
 func RunTask(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
+	sess := ctx.SessionStore(c)
+
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	t := new(database.Task)
@@ -26,24 +30,66 @@ func RunTask(c echo.Context) error {
 	}
 
 	var hosts []ssh.Config
+	var privKeys []*os.File
 	for _, srv := range t.Servers {
+		f, err := ioutil.TempFile("", "id_rda_")
+		f.WriteString(srv.SSHPrivateKey)
+		privKeys = append(privKeys, f)
+		if err != nil {
+			return err
+		}
 		hosts = append(hosts, ssh.Config{
-			User: srv.User,
-			Host: srv.IP,
-			Port: string(srv.Port),
+			User:   srv.User,
+			Host:   srv.IP,
+			Port:   strconv.Itoa(srv.Port),
+			RSA_ID: f.Name(),
 		})
 	}
+
+	defer func(files []*os.File) {
+		for _, f := range files {
+			if err := os.Remove(f.Name()); err != nil {
+				c.Logger().Error(err)
+			}
+		}
+	}(privKeys)
 
 	task := config.Task{
 		Name:     t.Name,
 		Env:      config.EnvVar(t.EnvVar()),
 		Commands: strings.Split(t.Script, "\n"),
+		Hosts:    hosts,
 	}
 
 	runner := executer.New("ssh")
-	if err := runner.Run(task, func(o *executer.CmdOutput) { o.Display() }); err != nil {
-		fmt.Fprintf(os.Stderr, "could not run task: %v\n", err)
+	err := runner.Run(task, func(o *executer.CmdOutput) {
+		var stdout, stderr string
+		if o.Stdout.Len() > 0 {
+			stdout = fmt.Sprintf("[%s](%s):\n%s", o.Host, o.Command, o.Stdout.String())
+		}
+		if o.Stdout.Len() > 0 {
+			stderr = fmt.Sprintf("[%s](%s):\n%s", o.Host, o.Command, o.Stderr.String())
+		}
+
+		if err := store.Run.Create(&database.Run{
+			TaskID: t.ID,
+			Output: fmt.Sprintf("%s\n%s", stdout, stderr),
+		}); err != nil {
+			c.Logger().Error(err)
+		}
+	})
+
+	if err != nil {
+		c.Logger().Error(err)
+		sess.FlashError("Could not run task.")
+		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", t.ID))
 	}
 
+	sess.FlashSuccess("Task ran successfully.")
+	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", t.ID))
+	// return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/runs/show/%d", t.ID))
+}
+
+func ShowRun(c echo.Context) error {
 	return nil
 }

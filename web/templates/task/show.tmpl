@@ -6,7 +6,9 @@
         <h4 class="">Task Detail</h4>
     </div>
     <div class="col-4">
-        <button class="w-100 btn btn-success btn-md" type="submit">Run Task</button>
+        <form action="/tasks/runs/{{.data.Task.ID}}" method="POST">
+            <button class="w-100 btn btn-success btn-md" type="submit">Run Task</button>
+        </form>
     </div>
 </div>
 <form action="/tasks/update/{{.data.ID}}" method="POST">
@@ -14,7 +16,7 @@
     <div class="col-12">
         <label for="name" class="form-label">On servers</label>
         <select class="form-select" multiple name="servers" aria-label="Default select example">
-            {{range .data.Servers}}
+            {{range .data.Task.Servers}}
                 <option selected value="{{.ID}}">{{.Name}}</option>
             {{end}}
         </select>
@@ -22,17 +24,17 @@
     
     <div class="col-12">
         <label for="name" class="form-label">Name</label>
-        <input type="text" name="name" value="{{.data.Name}}" class="form-control" id="name" placeholder="My Server">
+        <input type="text" name="name" value="{{.data.Task.Name}}" class="form-control" id="name" placeholder="My Server">
     </div>
 
     <div class="col-12">
         <label for="env" class="form-label">Environment</label>
-        <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true">{{.data.Env}}</textarea>
+        <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true">{{.data.Task.Env}}</textarea>
     </div>
 
     <div class="col-12">
         <label for="script" class="form-label">Script</label>
-        <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main">{{.data.Script}}</textarea>
+        <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main">{{.data.Task.Script}}</textarea>
         <div style="height: 300px; width: 100%"  id="editor"/>
     </div>
 

@@ -11,8 +11,8 @@ import (
 type Task struct {
 	ID        uint
 	Servers   []Server `gorm:"many2many:task_servers;"`
-	Runs      []Run
-	Name      string `sql:"type:varchar(30)"`
+	Runs      []Run    `gorm:"-"`
+	Name      string   `sql:"type:varchar(30)"`
 	Env       string
 	Script    string
 	CreatedAt time.Time
