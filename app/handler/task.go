@@ -112,8 +112,15 @@ func ShowTask(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
+	var runs []database.Run
+	if err := store.Run.Find(&runs, "task_id = ?", task.ID); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
 	return c.Render(http.StatusOK, "task/show", map[string]interface{}{
 		"Task":    task,
+		"Runs":    runs,
 		"Servers": servers,
 	})
 }
@@ -145,6 +152,11 @@ func UpdateTask(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	var cmds []string
+	for _, c := range strings.Split(t.Script, "\n") {
+		cmds = append(cmds, strings.TrimSpace(c))
+	}
+
 	var servers []database.Server
 	if err := store.Server.FindMany(&servers, t.ServerIDs); err != nil {
 		c.Logger().Error(err)
@@ -154,7 +166,7 @@ func UpdateTask(c echo.Context) error {
 	task.Name = t.Name
 	task.Env = t.Env
 	task.Servers = servers
-	task.Script = t.Script
+	task.Script = strings.Join(cmds, "\n")
 	if err := store.Task.Update(task); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))

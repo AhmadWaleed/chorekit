@@ -75,7 +75,7 @@ func CreateServerPost(c echo.Context) error {
 	return c.Render(http.StatusOK, "server/create", nil)
 }
 
-func UpdateServer(c echo.Context) error {
+func DeleteServer(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	sess := ctx.SessionStore(ctx)
 
@@ -96,19 +96,13 @@ func UpdateServer(c echo.Context) error {
 
 	id, _ := strconv.Atoi(c.Param("id"))
 	store := ctx.Store(ctx.App.DB())
-	server := new(database.Server)
-	if err := store.Server.First(server, id); err != nil {
-		c.Logger().Error(err)
-		return echo.ErrNotFound
-	}
-
-	if err := store.Server.Update(server); err != nil {
+	if err := store.Server.Delete(&database.Server{}, id); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
 		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
 	}
 
-	return c.Render(http.StatusOK, "server/show", server)
+	return c.Redirect(http.StatusSeeOther, "/servers/index")
 }
 
 func ShowServer(c echo.Context) error {
@@ -144,7 +138,6 @@ func IndexServer(c echo.Context) error {
 }
 
 func generatePrivPubKeyPair() (string, string, error) {
-
 	key, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return "", "", fmt.Errorf("could not generate RSA keypair: %v", err)

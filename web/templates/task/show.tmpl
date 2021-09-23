@@ -1,47 +1,65 @@
 {{define "title"}}Show Task{{end}}
 
 {{define "content"}}
-<div class="row mb-3">
-    <div class="col-8">
-        <h4 class="">Task Detail</h4>
+    <div class="row mb-3">
+        <div class="col-8">
+            <h4 class="">Task Detail</h4>
+        </div>
+        <div class="col-4">
+            <form action="/tasks/runs/{{.data.Task.ID}}" method="POST">
+                <button class="w-100 btn btn-success btn-md" type="submit">Run Task</button>
+            </form>
+        </div>
     </div>
-    <div class="col-4">
-        <form action="/tasks/runs/{{.data.Task.ID}}" method="POST">
-            <button class="w-100 btn btn-success btn-md" type="submit">Run Task</button>
-        </form>
-    </div>
-</div>
-<form action="/tasks/update/{{.data.ID}}" method="POST">
-    <div class="row g-3">
-    <div class="col-12">
-        <label for="name" class="form-label">On servers</label>
-        <select class="form-select" multiple name="servers" aria-label="Default select example">
-            {{range .data.Task.Servers}}
-                <option selected value="{{.ID}}">{{.Name}}</option>
-            {{end}}
-        </select>
-    </div>
-    
-    <div class="col-12">
-        <label for="name" class="form-label">Name</label>
-        <input type="text" name="name" value="{{.data.Task.Name}}" class="form-control" id="name" placeholder="My Server">
-    </div>
+    <form action="/tasks/update/{{.data.Task.ID}}" method="POST">
+        <div class="row g-3">
+        <div class="col-12">
+            <label for="name" class="form-label">On servers</label>
+            <select class="form-select" multiple name="servers" aria-label="Default select example">
+                {{range .data.Task.Servers}}
+                    <option selected value="{{.ID}}">{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        
+        <div class="col-12">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" name="name" value="{{.data.Task.Name}}" class="form-control" id="name" placeholder="My Server">
+        </div>
 
-    <div class="col-12">
-        <label for="env" class="form-label">Environment</label>
-        <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true">{{.data.Task.Env}}</textarea>
+        <div class="col-12">
+            <label for="env" class="form-label">Environment</label>
+            <textarea type="text" name="env" class="form-control" id="env" placeholder="APP_ENV=dev;DEBUG=true">{{.data.Task.Env}}</textarea>
+        </div>
+
+        <div class="col-12">
+            <label for="script" class="form-label">Script</label>
+            <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main">{{.data.Task.Script}}</textarea>
+            <div style="height: 300px; width: 100%"  id="editor"/>
+        </div>
+
+        <hr class="my-4">
+
+        <button class="w-100 btn btn-primary btn-lg" type="submit">Update Task</button>
+    </form>
+
+    <div class="my-3 p-3 bg-body rounded shadow-sm">
+        <h6 class="border-bottom pb-2 mb-0">Recent runs</h6>
+
+        {{range .data.Runs}}
+            <div class="d-flex text-muted pt-3">
+                <svg class="bd-placeholder-img flex-shrink-0 me-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 32x32" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#007bff"/><text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text></svg>
+                <div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+                <div class="d-flex justify-content-between">
+                    <strong class="text-gray-dark">{{.CreatedAt}}</strong>
+                    <a href="/tasks/runs/show/{{.ID}}">View</a>
+                </div>
+                <span class="d-block">{{printf "%.25s..." .Output}}"</span>
+                </div>
+            </div>
+        {{end}}
+
     </div>
-
-    <div class="col-12">
-        <label for="script" class="form-label">Script</label>
-        <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main">{{.data.Task.Script}}</textarea>
-        <div style="height: 300px; width: 100%"  id="editor"/>
-    </div>
-
-    <hr class="my-4">
-
-    <button class="w-100 btn btn-primary btn-lg" type="submit">Update Task</button>
-</form>
 {{end}}
 
 {{define "scripts"}}
@@ -55,6 +73,7 @@
         editor.session.setMode("ace/mode/sh");
         editor.getSession().setValue(textarea.value);
         editor.getSession().on('change', () => {
+            console.log(editor.getSession().getValue())
             textarea.value = editor.getSession().getValue()
         });
     </script>

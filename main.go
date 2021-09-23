@@ -71,12 +71,13 @@ func RegisterRoutes(e *echo.Echo) {
 	task.GET("/index", handler.TaskIndex).Name = "task.index"
 	task.GET("/show/:id", handler.ShowTask).Name = "task.show"
 	task.POST("/update/:id", handler.UpdateTask).Name = "task.update"
-	task.POST("/runs/:id", handler.RunTask).Name = "task.run"
-	task.GET("/runs/show/:id", handler.ShowRun).Name = "task.run.show"
+	task.POST("/runs/:id", handler.RunPost).Name = "task.run"
+	task.GET("/runs/show/:id", handler.RunGet).Name = "task.run.show"
 
 	server := e.Group("/servers", core.AuthMiddleware())
 	server.GET("/create", handler.CreateServerGet).Name = "server.create.get"
 	server.POST("/create", handler.CreateServerPost).Name = "server.create.post"
 	server.GET("/index", handler.IndexServer).Name = "server.index"
 	server.GET("/show/:id", handler.ShowServer).Name = "server.show"
+	server.GET("/delete/:id", handler.DeleteServer).Name = "server.delete"
 }

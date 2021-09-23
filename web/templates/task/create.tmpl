@@ -25,11 +25,29 @@
 
     <div class="col-12">
         <label for="script" class="form-label">Script</label>
-        <textarea type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main"></textarea>
+        <textarea style="display: none;" type="text" name="script" rows="5" class="form-control" id="script" placeholder="cd /var/www/html&#10;git pull origin main"></textarea>
+        <div style="height: 300px; width: 100%"  id="editor"/>
     </div>
 
     <hr class="my-4">
 
     <button class="w-100 btn btn-primary btn-lg" type="submit">Create Task</button>
 </form>
+{{end}}
+
+{{define "scripts"}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+        const editor = ace.edit("editor");
+        const textarea = document.querySelector('textarea[name="script"]')
+
+        editor.setTheme("ace/theme/github");
+        editor.setShowPrintMargin(false);
+        editor.session.setMode("ace/mode/sh");
+        editor.getSession().setValue(textarea.value);
+        editor.getSession().on('change', () => {
+            console.log(editor.getSession().getValue())
+            textarea.value = editor.getSession().getValue()
+        });
+    </script>
 {{end}}

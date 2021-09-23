@@ -16,7 +16,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RunTask(c echo.Context) error {
+func RunGet(c echo.Context) error {
+	ctx := c.(*core.AppContext)
+	store := ctx.Store(ctx.App.DB())
+
+	id, _ := strconv.Atoi(c.Param("id"))
+	run := new(database.Run)
+	if err := store.Run.First(run, id); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrNotFound
+	}
+
+	return c.Render(http.StatusOK, "/run/show", run)
+}
+
+func RunPost(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
 	sess := ctx.SessionStore(c)
@@ -87,9 +101,4 @@ func RunTask(c echo.Context) error {
 
 	sess.FlashSuccess("Task ran successfully.")
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", t.ID))
-	// return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/runs/show/%d", t.ID))
-}
-
-func ShowRun(c echo.Context) error {
-	return nil
 }

@@ -32,39 +32,34 @@ type ServerModel interface {
 	Find(m *[]Server) error
 	FindMany(m *[]Server, ids []int) error
 	Create(m *Server) error
+	Delete(m *Server, conds ...interface{}) error
 	Update(m *Server) error
-	Ping() error
 }
 
 type MysqlServerModel struct {
 	DB *gorm.DB
 }
 
-func (m *MysqlServerModel) First(h *Server, conds ...interface{}) error {
-	return m.DB.First(h, conds...).Error
+func (m *MysqlServerModel) First(s *Server, conds ...interface{}) error {
+	return m.DB.First(s, conds...).Error
 }
 
-func (m *MysqlServerModel) Create(h *Server) error {
-	return m.DB.Create(h).Error
+func (m *MysqlServerModel) Create(s *Server) error {
+	return m.DB.Create(s).Error
 }
 
-func (m *MysqlServerModel) Find(h *[]Server) error {
-	return m.DB.Find(h).Error
+func (m *MysqlServerModel) Find(s *[]Server) error {
+	return m.DB.Find(s).Error
 }
 
-func (m *MysqlServerModel) FindMany(h *[]Server, ids []int) error {
-	return m.DB.Where("ID IN ?", ids).Find(h).Error
+func (m *MysqlServerModel) FindMany(s *[]Server, ids []int) error {
+	return m.DB.Where("ID IN ?", ids).Find(s).Error
 }
 
-func (m *MysqlServerModel) Update(h *Server) error {
-	return m.DB.Save(h).Error
+func (m *MysqlServerModel) Update(s *Server) error {
+	return m.DB.Save(s).Error
 }
 
-func (m *MysqlServerModel) Ping() error {
-	db, err := m.DB.DB()
-	if err != nil {
-		return err
-	}
-
-	return db.Ping()
+func (m *MysqlServerModel) Delete(s *Server, conds ...interface{}) error {
+	return m.DB.Delete(s, conds...).Error
 }
