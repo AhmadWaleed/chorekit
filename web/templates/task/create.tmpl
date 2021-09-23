@@ -46,7 +46,6 @@
         editor.session.setMode("ace/mode/sh");
         editor.getSession().setValue(textarea.value);
         editor.getSession().on('change', () => {
-            console.log(editor.getSession().getValue())
             textarea.value = editor.getSession().getValue()
         });
     </script>

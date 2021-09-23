@@ -47,11 +47,11 @@ func RunPost(c echo.Context) error {
 	var privKeys []*os.File
 	for _, srv := range t.Servers {
 		f, err := ioutil.TempFile("", "id_rda_")
-		f.WriteString(srv.SSHPrivateKey)
-		privKeys = append(privKeys, f)
 		if err != nil {
 			return err
 		}
+		f.WriteString(srv.SSHPrivateKey)
+		privKeys = append(privKeys, f)
 		hosts = append(hosts, ssh.Config{
 			User:   srv.User,
 			Host:   srv.IP,
