@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/sprig"
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core/session"
 	"github.com/labstack/echo/v4"
@@ -44,6 +45,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	includes = append(includes, t.Folder+string(os.PathSeparator)+name+"."+t.Extension)
 
 	templates, err := template.New(name).
+		Funcs(sprig.FuncMap()).
 		Funcs(I18nPlugin()).
 		Funcs(SessionPlugin(c)).
 		Funcs(RoutePlugin(c)).
