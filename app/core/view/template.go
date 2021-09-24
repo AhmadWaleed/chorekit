@@ -11,6 +11,9 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core/session"
+	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/i18n"
+	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -44,12 +47,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	includes = append(includes, layouts...)
 	includes = append(includes, t.Folder+string(os.PathSeparator)+name+"."+t.Extension)
 
-	templates, err := template.New(name).
-		Funcs(sprig.FuncMap()).
-		Funcs(I18nPlugin()).
-		Funcs(SessionPlugin(c)).
-		Funcs(RoutePlugin(c)).
-		ParseFiles(includes...)
+	templates, err := template.New(name).Funcs(FuncMap(c)).Funcs(sprig.FuncMap()).ParseFiles(includes...)
 
 	if err != nil {
 		return fmt.Errorf("could not parse template files: %v", err)
@@ -61,4 +59,34 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	t.Vars["data"] = data
 
 	return templates.ExecuteTemplate(w, root+"."+t.Extension, t.Vars)
+}
+
+func FuncMap(c echo.Context) template.FuncMap {
+	sess := session.NewSessionStore(c)
+	return template.FuncMap{
+		"Lang": i18n.Get,
+		"route": func(name string) string {
+			return utils.Route(c, name)
+		},
+		"Auth": func() bool {
+			return sess.GetBool("Auth")
+		},
+		"User": func() database.User {
+			return sess.Get("User").(database.User)
+		},
+		"Old": func(name string) string {
+			data, err := c.FormParams()
+			if err != nil {
+				c.Logger().Error(err)
+			}
+			if val, ok := data[name]; ok {
+				if len(val) == 0 {
+					return ""
+				}
+				return val[0]
+			}
+
+			return ""
+		},
+	}
 }

@@ -79,5 +79,6 @@ func RegisterRoutes(e *echo.Echo) {
 	server.POST("/create", handler.CreateServerPost).Name = "server.create.post"
 	server.GET("/index", handler.IndexServer).Name = "server.index"
 	server.GET("/show/:id", handler.ShowServer).Name = "server.show"
-	server.GET("/delete/:id", handler.DeleteServer).Name = "server.delete"
+	server.POST("/delete/:id", handler.DeleteServer).Name = "server.delete"
+	server.POST("/status/check/:id", handler.StatusCheck).Name = "server.status"
 }

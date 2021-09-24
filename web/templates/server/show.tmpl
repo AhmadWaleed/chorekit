@@ -1,38 +1,14 @@
-{{define "title"}}Show Server{{end}}
+{{define "title"}}Server Public Key{{end}}
 
 {{define "content"}}
 <div class="row">
     <div class="col-12">
-        <h4 class="mb-3">Server detail</h4>
+        <h4 class="mb-3">Public Key</h4>
         <form action="/servers/create" method="POST">
             <div class="row g-3">
                 <div class="col-12">
-                    <label for="name" class="form-label">Name</label>
-                    <input type="text" name="name" value="{{.data.Name}}" class="form-control" id="name"
-                        placeholder="My Server">
+                    <textarea disabled rows="10" class="form-control overflow-wrap: break-word">{{.data.SSHPublicKey}}</textarea>
                 </div>
-
-                <div class="col-12">
-                    <label for="ip" class="form-label">Hostname / IP Address</label>
-                    <input type="text" name="ip" value="{{.data.IP}}" class="form-control" id="ip"
-                        placeholder="196.87.47.9">
-                </div>
-
-                <div class="col-12">
-                    <label for="port" class="form-label">Port</label>
-                    <input type="text" name="port" value="{{.data.Port}}" class="form-control" id="port"
-                        placeholder="22">
-                </div>
-
-                <div class="col-12">
-                    <label for="user" class="form-label">User</label>
-                    <input type="text" name="user" value="{{.data.User}}" class="form-control" id="user"
-                        placeholder="deployer">
-                </div>
-
-                <hr class="my-4">
-
-                <button class="w-100 btn btn-primary btn-lg" type="submit">Update Server</button>
         </form>
     </div>
 </div>
