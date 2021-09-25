@@ -11,8 +11,8 @@ import (
 type Task struct {
 	ID        uint
 	Servers   []Server `gorm:"many2many:task_servers;"`
-	Runs      []Run    `gorm:"-"`
-	Name      string   `sql:"type:varchar(30)"`
+	Runs      []Run
+	Name      string `sql:"type:varchar(30)"`
 	Env       string
 	Script    string
 	CreatedAt time.Time
@@ -38,6 +38,7 @@ type TaskServer struct {
 type TaskModel interface {
 	First(m *Task, conds ...interface{}) error
 	Find(m *[]Task) error
+	FindMany(m *[]Task, ids []uint) error
 	Create(m *Task) error
 	Update(m *Task) error
 }
@@ -58,7 +59,7 @@ func (m *MysqlTaskModel) Find(t *[]Task) error {
 	return m.DB.Preload(clause.Associations).Find(t).Error
 }
 
-func (m *MysqlTaskModel) FindMany(t *[]Task, ids []int) error {
+func (m *MysqlTaskModel) FindMany(t *[]Task, ids []uint) error {
 	return m.DB.Where("ID IN ?", ids).Find(t).Error
 }
 

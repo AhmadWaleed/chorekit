@@ -9,6 +9,7 @@ import (
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
 	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -57,7 +58,7 @@ func CreateTaskPost(c echo.Context) error {
 			sess.FlashError(err)
 		}
 
-		return c.Redirect(http.StatusSeeOther, "/tasks/create")
+		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.create.get"))
 	}
 
 	if err := store.Task.Create(&database.Task{
@@ -68,11 +69,11 @@ func CreateTaskPost(c echo.Context) error {
 	}); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Redirect(http.StatusSeeOther, "task/create")
+		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.create.get"))
 	}
 
 	sess.FlashSuccess("Task created successfully.")
-	return c.Redirect(http.StatusSeeOther, "/tasks/create")
+	return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.index"))
 }
 
 func TaskIndex(c echo.Context) error {
@@ -88,6 +89,38 @@ func TaskIndex(c echo.Context) error {
 	return c.Render(http.StatusOK, "task/index", tasks)
 }
 
+type (
+	TaskServer struct {
+		Server   database.Server
+		Assigned bool
+	}
+	TaskViewModel struct {
+		Task    database.Task
+		Servers []TaskServer
+	}
+)
+
+func NewTaskViewModel(task database.Task, servers []database.Server) TaskViewModel {
+	var isAssigned = func(srv database.Server) bool {
+		for _, s := range task.Servers {
+			if s.ID == srv.ID {
+				return true
+			}
+		}
+		return false
+	}
+
+	vm := TaskViewModel{Task: task}
+	for _, s := range servers {
+		vm.Servers = append(vm.Servers, TaskServer{
+			Server:   s,
+			Assigned: isAssigned(s),
+		})
+	}
+
+	return vm
+}
+
 func ShowTask(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
@@ -101,28 +134,13 @@ func ShowTask(c echo.Context) error {
 	}
 	task.Script = strings.TrimSpace(task.Script)
 
-	var ids []int
-	for _, srv := range task.Servers {
-		ids = append(ids, int(srv.ID))
-	}
-
 	var servers []database.Server
-	if err := store.Server.FindMany(&servers, ids); err != nil {
+	if err := store.Server.Find(&servers); err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
 
-	var runs []database.Run
-	if err := store.Run.Find(&runs, "task_id = ?", task.ID); err != nil {
-		c.Logger().Error(err)
-		return echo.ErrInternalServerError
-	}
-
-	return c.Render(http.StatusOK, "task/show", map[string]interface{}{
-		"Task":    task,
-		"Runs":    runs,
-		"Servers": servers,
-	})
+	return c.Render(http.StatusOK, "task/show", NewTaskViewModel(*task, servers))
 }
 
 func UpdateTask(c echo.Context) error {

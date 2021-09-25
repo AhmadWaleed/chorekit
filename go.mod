@@ -28,5 +28,5 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/leonelquinteros/gotext.v1 v1.3.1 // indirect
 	gorm.io/driver/mysql v1.1.2 // indirect
-	gorm.io/gorm v1.21.14 // indirect
+	gorm.io/gorm v1.21.15 // indirect
 )

@@ -17,6 +17,7 @@ import (
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/errors"
 	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/ssh"
 )
@@ -51,7 +52,7 @@ func CreateServerPost(c echo.Context) error {
 		for _, err := range errs {
 			sess.FlashError(err)
 		}
-		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
+		return c.Redirect(http.StatusSeeOther, "/servers/create")
 	}
 
 	privKey, pubKey, err := generatePrivPubKeyPair()
@@ -74,10 +75,11 @@ func CreateServerPost(c echo.Context) error {
 	if err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
+		return c.Redirect(http.StatusSeeOther, utils.Route(c, "server.create.get"))
 	}
 
-	return c.Render(http.StatusOK, "server/create", nil)
+	sess.FlashSuccess("Server created successfully.")
+	return c.Redirect(http.StatusSeeOther, utils.Route(c, "server.index"))
 }
 
 func DeleteServer(c echo.Context) error {

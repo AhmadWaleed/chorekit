@@ -31,7 +31,9 @@ func main() {
 
 	// migration for dev
 	mr := app.ModelRegistry()
-	if err := mr.Register(database.User{}, database.Server{}, database.Task{}, database.Run{}); err != nil {
+	if err := mr.Register(
+		database.User{}, database.Server{}, database.Task{}, database.Run{}, database.BucketTask{}, database.Bucket{},
+	); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 
@@ -81,4 +83,10 @@ func RegisterRoutes(e *echo.Echo) {
 	server.GET("/show/:id", handler.ShowServer).Name = "server.show"
 	server.POST("/delete/:id", handler.DeleteServer).Name = "server.delete"
 	server.POST("/status/check/:id", handler.StatusCheck).Name = "server.status"
+
+	bucket := e.Group("/buckets", core.AuthMiddleware())
+	bucket.GET("/create", handler.CreateBucketGet).Name = "bucket.create.get"
+	bucket.POST("/create", handler.CreateBucketPost).Name = "bucket.create.post"
+	bucket.GET("/index", handler.IndexBucket).Name = "bucket.index"
+	bucket.POST("/delete/:id", handler.DeleteBucket).Name = "bucket.delete"
 }

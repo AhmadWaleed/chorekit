@@ -2,7 +2,10 @@
 
 {{define "content"}}
 <table class="table caption-top">
-    <caption>Servers</caption>
+    <div class="d-flex justify-content-between">
+        <h6>Servers</h6>
+        <a href="{{route "server.create.get"}}" class="btn btn-success">Create Server</a>
+    </div>
     <thead>
       <tr>
         <th scope="col">Name</th>

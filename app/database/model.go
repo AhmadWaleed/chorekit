@@ -11,6 +11,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type BaseModel struct {
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 // Model facilitate database interactions
 type Model struct {
 	models map[string]reflect.Value

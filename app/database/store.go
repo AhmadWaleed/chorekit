@@ -7,6 +7,7 @@ type Store struct {
 	Server ServerModel
 	Task   TaskModel
 	Run    RunModel
+	Bucket BucketModel
 }
 
 type StoreFunc func(db *gorm.DB) *Store
@@ -17,5 +18,6 @@ func NewStoreFunc(db *gorm.DB) *Store {
 		Server: &MysqlServerModel{db},
 		Task:   &MysqlTaskModel{db},
 		Run:    &MysqlRunModel{db},
+		Bucket: &MysqlBucketModel{db},
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 type Run struct {
 	gorm.Model
+	Task   Task
 	TaskID uint
 	Output string
 }
