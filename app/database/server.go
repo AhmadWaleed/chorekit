@@ -1,8 +1,6 @@
 package database
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -14,7 +12,7 @@ var (
 )
 
 type Server struct {
-	ID            uint
+	DBModel
 	Name          string `sql:"type:varchar(30)"`
 	IP            string
 	User          string
@@ -22,9 +20,6 @@ type Server struct {
 	SSHPublicKey  string
 	SSHPrivateKey string
 	Status        string `sql:"type:ENUM('active','inactive')"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
 
 type ServerModel interface {

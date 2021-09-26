@@ -1,0 +1,39 @@
+{{define "title"}}Bucket Detail{{end}}
+
+{{define "content"}}
+<div class="row mb-3">
+    <div class="col-8">
+        <h4 class="">Bucket detail</h4>
+    </div>
+    <div class="col-4">
+        <form action="/buckets/runs/{{.data.Bucket.ID}}" method="POST">
+            <button class="w-100 btn btn-success btn-md" type="submit">Run Bucket</button>
+        </form>
+    </div>
+</div>
+<form action="/buckets/create" method="POST">
+    <div class="row g-3">
+
+    <div class="col-12">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" name="name" value="{{.data.Bucket.Name}}" class="form-control" id="name" placeholder="My Server">
+    </div>
+    
+    <div class="col-12">
+        <label for="name" class="form-label">Select tasks</label>
+        <select class="form-select" multiple name="tasks" aria-label="Default select example">
+            {{range .data.Tasks}}
+                {{if .Added}}
+                    <option value="{{.Task.ID}}">{{.Task.Name}}</option>
+                {{else}}
+                    <option selected value="{{.Task.ID}}">{{.Task.Name}}</option>
+                {{end}}
+            {{end}}
+        </select>
+    </div>
+
+    <hr class="my-4">
+
+    <button class="w-100 btn btn-primary btn-lg" type="submit">Update Bucket</button>
+</form>
+{{end}}

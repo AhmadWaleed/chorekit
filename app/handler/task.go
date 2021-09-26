@@ -61,11 +61,17 @@ func CreateTaskPost(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.create.get"))
 	}
 
+	// parse script into commands slice
+	var cmds []string
+	for _, c := range strings.Split(task.Script, "\n") {
+		cmds = append(cmds, strings.TrimSpace(c))
+	}
+
 	if err := store.Task.Create(&database.Task{
 		Name:    task.Name,
 		Env:     task.Env,
 		Servers: servers,
-		Script:  task.Script,
+		Script:  strings.Join(cmds, "\n"),
 	}); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
@@ -193,4 +199,27 @@ func UpdateTask(c echo.Context) error {
 
 	sess.FlashSuccess("Task updated successfully.")
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", task.ID))
+}
+
+func DeleteTask(c echo.Context) error {
+	ctx := c.(*core.AppContext)
+	sess := ctx.SessionStore(c)
+	store := ctx.Store(ctx.App.DB())
+
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	task := new(database.Task)
+	if err := store.Task.First(task, id); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrNotFound
+	}
+
+	if err := store.Task.Delete(task); err != nil {
+		c.Logger().Error(err)
+		sess.FlashError(errors.ErrorText(errors.EntityDeletionError))
+		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.index"))
+	}
+
+	sess.FlashSuccess("Task deleted successfully.")
+	return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.index"))
 }

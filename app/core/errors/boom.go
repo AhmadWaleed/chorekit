@@ -11,7 +11,7 @@ const (
 
 var errorMessage = map[string]string{
 	"internalError":       "an internal error occured",
-	"userNotFound":        "user could not be found",
+	"userNotFound":        "User could not be found",
 	"userAlreadyExists":   "The user with this email is already exists.",
 	"invalidBindingModel": "model could not be bound",
 	"entityCreationError": "could not create entity",

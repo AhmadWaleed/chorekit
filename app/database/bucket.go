@@ -6,13 +6,14 @@ import (
 )
 
 type Bucket struct {
-	BaseModel
-	Name  string
-	Tasks []BucketTask
+	DBModel
+	Name     string
+	Parallel bool
+	Tasks    []BucketTask
 }
 
 type BucketTask struct {
-	gorm.Model
+	DBModel
 	Task     Task
 	TaskID   uint
 	BucketID uint
@@ -52,9 +53,5 @@ func (b *MysqlBucketModel) Update(buc *Bucket) error {
 }
 
 func (m *MysqlBucketModel) Delete(b *Bucket, conds ...interface{}) error {
-	if err := m.DB.Association("Tasks").Delete(b.Tasks); err != nil {
-		return err
-	}
-
-	return m.DB.Delete(b, conds...).Error
+	return m.DB.Select("Tasks").Delete(b, conds...).Error
 }

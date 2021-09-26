@@ -37,18 +37,26 @@ func RunPost(c echo.Context) error {
 
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	t := new(database.Task)
-	if err := store.Task.First(t, id); err != nil {
+	task := new(database.Task)
+	if err := store.Task.First(task, id); err != nil {
 		c.Logger().Error(err)
 		return echo.ErrNotFound
 	}
 
+	go run(*task, c, store)
+
+	sess.FlashSuccess("Task ran successfully.")
+	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", task.ID))
+}
+
+func run(t database.Task, c echo.Context, store *database.Store) {
+	// create ssh servers config with temporary private key files for task servers.
 	var hosts []ssh.Config
 	var privKeys []*os.File
 	for _, srv := range t.Servers {
 		f, err := ioutil.TempFile("", "id_rda_")
 		if err != nil {
-			return err
+			c.Logger().Error(err)
 		}
 		f.WriteString(srv.SSHPrivateKey)
 		privKeys = append(privKeys, f)
@@ -59,7 +67,7 @@ func RunPost(c echo.Context) error {
 			RSA_ID: f.Name(),
 		})
 	}
-
+	// remove the temporary private key files after running tasks
 	defer func(files []*os.File) {
 		for _, f := range files {
 			if err := os.Remove(f.Name()); err != nil {
@@ -74,14 +82,13 @@ func RunPost(c echo.Context) error {
 		Commands: strings.Split(t.Script, "\n"),
 		Hosts:    hosts,
 	}
-
 	runner := executer.New("ssh")
 	err := runner.Run(task, func(o *executer.CmdOutput) {
 		var stdout, stderr string
 		if o.Stdout.Len() > 0 {
 			stdout = fmt.Sprintf("[%s](%s):\n%s", o.Host, o.Command, o.Stdout.String())
 		}
-		if o.Stdout.Len() > 0 {
+		if o.Stderr.Len() > 0 {
 			stderr = fmt.Sprintf("[%s](%s):\n%s", o.Host, o.Command, o.Stderr.String())
 		}
 
@@ -92,13 +99,7 @@ func RunPost(c echo.Context) error {
 			c.Logger().Error(err)
 		}
 	})
-
 	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError("Could not run task.")
-		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", t.ID))
 	}
-
-	sess.FlashSuccess("Task ran successfully.")
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", t.ID))
 }

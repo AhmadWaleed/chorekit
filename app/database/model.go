@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type BaseModel struct {
+type DBModel struct {
 	ID        uint `gorm:"primarykey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time

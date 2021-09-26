@@ -73,6 +73,7 @@ func RegisterRoutes(e *echo.Echo) {
 	task.GET("/index", handler.TaskIndex).Name = "task.index"
 	task.GET("/show/:id", handler.ShowTask).Name = "task.show"
 	task.POST("/update/:id", handler.UpdateTask).Name = "task.update"
+	task.POST("/delete/:id", handler.DeleteTask).Name = "task.delete"
 	task.POST("/runs/:id", handler.RunPost).Name = "task.run"
 	task.GET("/runs/show/:id", handler.RunGet).Name = "task.run.show"
 
@@ -89,4 +90,5 @@ func RegisterRoutes(e *echo.Echo) {
 	bucket.POST("/create", handler.CreateBucketPost).Name = "bucket.create.post"
 	bucket.GET("/index", handler.IndexBucket).Name = "bucket.index"
 	bucket.POST("/delete/:id", handler.DeleteBucket).Name = "bucket.delete"
+	bucket.GET("/show/:id", handler.ShowBucket).Name = "bucket.show"
 }

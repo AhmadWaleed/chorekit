@@ -25,8 +25,9 @@ func CreateBucketGet(c echo.Context) error {
 }
 
 type Bucket struct {
-	Name    string `form:"name" validate:"required"`
-	TaskIDs []uint `form:"tasks" validate:"required"`
+	Name     string `form:"name" validate:"required"`
+	Parallel bool   `form:"parallel" validate:"required"`
+	TaskIDs  []uint `form:"tasks" validate:"required"`
 }
 
 func CreateBucketPost(c echo.Context) error {
@@ -60,8 +61,9 @@ func CreateBucketPost(c echo.Context) error {
 	}
 
 	if err := store.Bucket.Create(&database.Bucket{
-		Name:  bucket.Name,
-		Tasks: bTasks,
+		Name:     bucket.Name,
+		Parallel: bucket.Parallel,
+		Tasks:    bTasks,
 	}); err != nil {
 		c.Logger().Error(err)
 		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
@@ -104,6 +106,59 @@ func IndexBucket(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "bucket/index", NewBucketListViewModel(buckets))
+}
+
+type (
+	BucketTask struct {
+		Task  database.Task
+		Added bool
+	}
+	BucketViewModel struct {
+		Bucket database.Bucket
+		Tasks  []BucketTask
+	}
+)
+
+func NewBucketViewModel(b database.Bucket, tasks []database.Task) BucketViewModel {
+	var isAdded = func(task database.Task) bool {
+		for _, t := range b.Tasks {
+			if t.Task.ID == task.ID {
+				return true
+			}
+		}
+		return false
+	}
+
+	vm := BucketViewModel{Bucket: b}
+	for _, t := range tasks {
+		vm.Tasks = append(vm.Tasks, BucketTask{
+			Task:  t,
+			Added: isAdded(t),
+		})
+	}
+
+	return vm
+}
+
+func ShowBucket(c echo.Context) error {
+	ctx := c.(*core.AppContext)
+	store := ctx.Store(ctx.App.DB())
+
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	bucket := new(database.Bucket)
+	if err := store.Bucket.First(bucket, id); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrNotFound
+	}
+
+	var tasks []database.Task
+	if err := store.Task.Find(&tasks); err != nil {
+		c.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.Render(http.StatusOK, "bucket/show", NewBucketViewModel(*bucket, tasks))
 }
 
 func DeleteBucket(c echo.Context) error {

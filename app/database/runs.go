@@ -8,7 +8,7 @@ import (
 )
 
 type Run struct {
-	gorm.Model
+	DBModel
 	Task   Task
 	TaskID uint
 	Output string
