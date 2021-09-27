@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"database/sql"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -13,56 +12,40 @@ import (
 	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type Application struct {
-	Echo          *echo.Echo // HTTP middleware
-	Validator     *validator.Validator
-	config        *config.AppConfig // Configuration
-	db            *gorm.DB          // Database connection
-	modelRegistry *database.Model   // Model registry for migration
+	Echo      *echo.Echo // HTTP middleware
+	Validator *validator.Validator
+	config    *config.AppConfig // Configuration
+	db        *sql.DB           // Database connection
 }
 
 // NewApp will create a new instance of the application
-func NewApp(config *config.AppConfig) *Application {
+func NewApp(config *config.AppConfig) (*Application, error) {
 	app := &Application{}
 	app.config = config
 	i18n.Configure(config.LocaleDir, config.Lang, config.LangDomain)
 
-	app.modelRegistry = database.NewModel()
-	err := app.modelRegistry.OpenWithConfig(config)
-	if err != nil {
-		log.Fatalf("gorm: could not connect to db %q", err)
-	}
-
-	v, _ := validator.NewValidator()
-	app.Validator = v
-
-	app.Echo = NewRouter(app)
-	app.db = app.modelRegistry.DB
-
-	return app
-}
-
-// GetModelRegistry returns the model registry
-func (app *Application) ModelRegistry() *database.Model {
-	return app.modelRegistry
-}
-
-// DB returns gorm (ORM)
-func (app *Application) DB() *gorm.DB {
-	return app.db
-}
-
-// DBConn returns gorm (ORM) underlyig sql deriver connection
-func (app *Application) DBConn() (*sql.DB, error) {
-	conn, err := app.db.DB()
+	db, err := database.Connect(config.ConnectionString)
 	if err != nil {
 		return nil, err
 	}
+	app.db = db
 
-	return conn, nil
+	v, err := validator.NewValidator()
+	if err != nil {
+		return nil, err
+	}
+	app.Validator = v
+	app.Echo = NewRouter(app)
+
+	return app, nil
+}
+
+// DB returns gorm (ORM)
+func (app *Application) DB() *sql.DB {
+	return app.db
 }
 
 // Config return the current app configuration
@@ -92,12 +75,7 @@ func (app *Application) GracefulShutdown() {
 
 	// close database connection
 	if app.db != nil {
-		db, err := app.db.DB()
-		if err != nil {
-			app.Echo.Logger.Fatal(err)
-		}
-
-		if err := db.Close(); err != nil {
+		if err := app.db.Close(); err != nil {
 			app.Echo.Logger.Fatal(err)
 		}
 	}

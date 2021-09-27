@@ -5,7 +5,6 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core"
-	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/handler"
 	"github.com/labstack/echo/v4"
 	// "github.com/prometheus/client_golang/prometheus/promhttp"
@@ -18,7 +17,10 @@ func main() {
 	}
 
 	// create server
-	app := core.NewApp(config)
+	app, err := core.NewApp(config)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
 	// serve files for dev
 	app.ServeStaticFiles()
 
@@ -28,22 +30,6 @@ func main() {
 	// metric / health endpoint according to RFC 5785
 	app.Echo.GET("/.well-known/health-check", handler.GetHealthcheck)
 	// app.Echo.GET("/.well-known/metrics", echo.WrapHandler(promhttp.Handler()))
-
-	// migration for dev
-	mr := app.ModelRegistry()
-	if err := mr.Register(
-		database.User{}, database.Server{}, database.Task{}, database.Run{}, database.BucketTask{}, database.Bucket{},
-	); err != nil {
-		app.Echo.Logger.Fatal(err)
-	}
-
-	if err := mr.AutoDropAll(); err != nil {
-		app.Echo.Logger.Fatal(err)
-	}
-
-	if err := mr.AutoMigrateAll(); err != nil {
-		app.Echo.Logger.Fatal(err)
-	}
 
 	// Start server
 	go func() {
@@ -91,4 +77,5 @@ func RegisterRoutes(e *echo.Echo) {
 	bucket.GET("/index", handler.IndexBucket).Name = "bucket.index"
 	bucket.POST("/delete/:id", handler.DeleteBucket).Name = "bucket.delete"
 	bucket.GET("/show/:id", handler.ShowBucket).Name = "bucket.show"
+	bucket.POST("/update/:id", handler.UpdateBucket).Name = "bucket.update"
 }

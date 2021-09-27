@@ -3,15 +3,15 @@ package session
 import (
 	"encoding/gob"
 
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
 func init() {
-	gob.Register(database.User{})
-	gob.Register(database.Server{})
+	gob.Register(model.User{})
+	gob.Register(model.Server{})
 	gob.Register(Flash{})
 }
 
@@ -102,7 +102,7 @@ func (s *SessionStore) Flashes() []Flash {
 	return fm
 }
 
-func (s *SessionStore) Authenticate(user database.User, opts ...OptionFunc) error {
+func (s *SessionStore) Authenticate(user model.User, opts ...OptionFunc) error {
 	for _, opt := range opts {
 		opt(s.Session)
 	}

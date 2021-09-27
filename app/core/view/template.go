@@ -11,7 +11,7 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/ahmadwaleed/choreui/app/config"
 	"github.com/ahmadwaleed/choreui/app/core/session"
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
@@ -71,8 +71,8 @@ func FuncMap(c echo.Context) template.FuncMap {
 		"Auth": func() bool {
 			return sess.GetBool("Auth")
 		},
-		"User": func() database.User {
-			return sess.Get("User").(database.User)
+		"User": func() model.User {
+			return sess.Get("User").(model.User)
 		},
 		"Old": func(name string) string {
 			data, err := c.FormParams()
