@@ -4,8 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ahmadwaleed/choreui/app/core"
-	"github.com/ahmadwaleed/choreui/app/core/errors"
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
@@ -47,31 +46,26 @@ func SignupPost(c echo.Context) error {
 	hash, err := core.NewHasher().Generate(usr.Password)
 	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
+		sess.FlashError(model.ErrEntityCreation.Error())
 		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
 	}
 
 	store := ctx.Store(ctx.App.DB())
-	dbuser := new(database.User)
-	err = store.User.First(dbuser, "email = ?", usr.Email)
-	if err != nil {
+	_, err = store.User.FindByEmail(usr.Email)
+	if err != nil && err != model.ErrNoResult {
 		c.Logger().Error(err)
-	}
-	if err == nil {
-		sess.FlashError(errors.ErrorText(errors.DeplicateUserFound))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
+		sess.FlashError(model.ErrEntityCreation.Error())
+		return c.Redirect(http.StatusSeeOther, "/auth/signup")
 	}
 
-	err = store.User.Create(&database.User{
-		Name:     usr.Name,
-		Email:    usr.Email,
-		Password: hash,
-	})
-
+	err = store.User.Create(usr.Name, usr.Email, hash)
 	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signup", nil)
+		if err == model.ErrDuplicateEntity {
+			sess.FlashError(model.ErrDuplicateEntity.Error())
+		}
+
+		return c.Redirect(http.StatusSeeOther, "/auth/signup")
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/auth/signin")
@@ -93,9 +87,7 @@ func SignInPost(c echo.Context) error {
 	usr := new(user)
 	if err := c.Bind(usr); err != nil {
 		sess.FlashError(http.StatusText(http.StatusBadRequest))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
-			"email": usr.Email,
-		})
+		return c.Redirect(http.StatusSeeOther, "/auth/signin")
 	}
 
 	if errs := ctx.App.Validator.Validate(usr); len(errs) > 0 {
@@ -103,18 +95,19 @@ func SignInPost(c echo.Context) error {
 		for _, err := range errs {
 			sess.FlashError(err)
 		}
-		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
-			"email": usr.Email,
-		})
+		return c.Redirect(http.StatusSeeOther, "/auth/signin")
 	}
 
 	store := ctx.Store(ctx.App.DB())
-	dbuser := new(database.User)
-	if err := store.User.First(dbuser); err != nil {
-		sess.FlashError(errors.ErrorText(errors.UserNotFound))
-		return c.Render(http.StatusUnprocessableEntity, "auth/signin", map[string]string{
-			"email": usr.Email,
-		})
+	dbuser, err := store.User.FindByEmail(usr.Email)
+	if err != nil {
+		c.Logger().Error(err)
+		if err == model.ErrNoResult {
+			sess.FlashError(model.ErrNoResult.Error())
+		} else {
+			sess.FlashError(http.StatusText(http.StatusInternalServerError))
+		}
+		return c.Redirect(http.StatusSeeOther, "/auth/signin")
 	}
 
 	if err := sess.Authenticate(*dbuser, func(s *sessions.Session) {

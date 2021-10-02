@@ -15,8 +15,7 @@ import (
 	"github.com/ahmadwaleed/chore/pkg/executer"
 	choressh "github.com/ahmadwaleed/chore/pkg/ssh"
 	"github.com/ahmadwaleed/choreui/app/core"
-	"github.com/ahmadwaleed/choreui/app/core/errors"
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/ssh"
@@ -58,23 +57,23 @@ func CreateServerPost(c echo.Context) error {
 	privKey, pubKey, err := generatePrivPubKeyPair()
 	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
+		sess.FlashError(model.ErrEntityCreation.Error())
 		return c.Render(http.StatusUnprocessableEntity, "server/create", nil)
 	}
 
 	store := ctx.Store(ctx.App.DB())
-	err = store.Server.Create(&database.Server{
+	err = store.Server.Create(&model.Server{
 		Name:          srv.Name,
 		IP:            srv.IP,
 		User:          srv.User,
 		Port:          srv.Port,
-		SSHPrivateKey: privKey,
 		SSHPublicKey:  pubKey,
-		Status:        string(database.Inactive),
+		SSHPrivateKey: privKey,
+		Status:        model.Inactive.String(),
 	})
 	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
+		sess.FlashError(model.ErrEntityCreation.Error())
 		return c.Redirect(http.StatusSeeOther, utils.Route(c, "server.create.get"))
 	}
 
@@ -87,7 +86,7 @@ func DeleteServer(c echo.Context) error {
 
 	id, _ := strconv.Atoi(c.Param("id"))
 	store := ctx.Store(ctx.App.DB())
-	if err := store.Server.Delete(&database.Server{}, id); err != nil {
+	if err := store.Server.Delete(uint(id)); err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -100,12 +99,16 @@ func ShowServer(c echo.Context) error {
 	sess := ctx.SessionStore(c)
 	store := ctx.Store(ctx.App.DB())
 
-	id, _ := strconv.Atoi(c.Param("id"))
+	ID, _ := strconv.Atoi(c.Param("id"))
 
-	server := new(database.Server)
-	if err := store.Server.First(server, id); err != nil {
+	server, err := store.Server.FindByID(uint(ID))
+	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.InternalError))
+		if err == model.ErrNoResult {
+			sess.FlashError(model.ErrNoResult.Error())
+		} else {
+			sess.FlashError(http.StatusText(http.StatusInternalServerError))
+		}
 		return echo.ErrInternalServerError
 	}
 
@@ -117,11 +120,11 @@ func IndexServer(c echo.Context) error {
 	sess := ctx.SessionStore(c)
 	store := ctx.Store(ctx.App.DB())
 
-	var servers []database.Server
-	if err := store.Server.Find(&servers); err != nil {
+	servers, err := store.Server.All()
+	if err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.InternalError))
-		return c.Render(http.StatusOK, "server/index", nil)
+		sess.FlashError(http.StatusText(http.StatusInternalServerError))
+		return c.Redirect(http.StatusSeeOther, "/servers/index")
 	}
 
 	return c.Render(http.StatusOK, "server/index", servers)
@@ -130,11 +133,11 @@ func IndexServer(c echo.Context) error {
 func StatusCheck(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
+	sess := ctx.SessionStore(c)
 
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	server := new(database.Server)
-	if err := store.Server.First(server, id); err != nil {
+	ID, _ := strconv.Atoi(c.Param("id"))
+	server, err := store.Server.FindByID(uint(ID))
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -167,22 +170,23 @@ func StatusCheck(c echo.Context) error {
 	runner := executer.New("ssh")
 	err = runner.Run(task, func(o *executer.CmdOutput) {
 		if o.Stderr.String() != "" {
-			server.Status = string(database.Inactive)
-			if err := store.Server.Update(server); err != nil {
+			if err := store.Server.UpdateStatusByID(server.ID, model.Active); err != nil {
+				sess.FlashError(model.ErrEntityUpdate.Error())
 				c.Logger().Error(err)
 			}
 		} else {
-			server.Status = string(database.Active)
-			if err := store.Server.Update(server); err != nil {
+			server.Status = model.Inactive.String()
+			if err := store.Server.UpdateStatusByID(server.ID, model.Active); err != nil {
+				sess.FlashError(model.ErrEntityUpdate.Error())
 				c.Logger().Error(err)
 			}
 		}
 	})
 
 	if err != nil {
-		server.Status = string(database.Inactive)
-		if err := store.Server.Update(server); err != nil {
+		if err := store.Server.UpdateStatusByID(server.ID, model.Inactive); err != nil {
 			c.Logger().Error(err)
+			sess.FlashError(model.ErrEntityUpdate.Error())
 		}
 	}
 

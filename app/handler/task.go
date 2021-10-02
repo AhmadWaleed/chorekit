@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/ahmadwaleed/choreui/app/core"
-	"github.com/ahmadwaleed/choreui/app/core/errors"
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/ahmadwaleed/choreui/app/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +16,7 @@ type Task struct {
 	Name      string `form:"name" validate:"required"`
 	Env       string `form:"env"`
 	Script    string `form:"script" validate:"required"`
-	ServerIDs []int  `form:"servers" validate:"required"`
+	ServerIDs []uint `form:"servers" validate:"required"`
 }
 
 func CreateTaskGet(c echo.Context) error {
@@ -25,8 +24,8 @@ func CreateTaskGet(c echo.Context) error {
 	sess := ctx.SessionStore(c)
 	store := ctx.Store(ctx.App.DB())
 
-	var servers []database.Server
-	if err := store.Server.Find(&servers); err != nil {
+	servers, err := store.Server.All()
+	if err != nil {
 		c.Logger().Error(err)
 		sess.FlashWarning("Please create a server before creating tasks.")
 		return c.Render(http.StatusOK, "task/create", nil)
@@ -46,8 +45,8 @@ func CreateTaskPost(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	var servers []database.Server
-	if err := store.Server.FindMany(&servers, task.ServerIDs); err != nil {
+	servers, err := store.Server.FindMany(task.ServerIDs)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -61,20 +60,19 @@ func CreateTaskPost(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.create.get"))
 	}
 
-	// parse script into commands slice
 	var cmds []string
 	for _, c := range strings.Split(task.Script, "\n") {
 		cmds = append(cmds, strings.TrimSpace(c))
 	}
 
-	if err := store.Task.Create(&database.Task{
+	if err := store.Task.Create(&model.Task{
 		Name:    task.Name,
 		Env:     task.Env,
 		Servers: servers,
 		Script:  strings.Join(cmds, "\n"),
 	}); err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
+		sess.FlashError(model.ErrEntityCreation.Error())
 		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.create.get"))
 	}
 
@@ -86,8 +84,8 @@ func TaskIndex(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
 
-	var tasks []database.Task
-	if err := store.Task.Find(&tasks); err != nil {
+	tasks, err := store.Task.All()
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -97,17 +95,17 @@ func TaskIndex(c echo.Context) error {
 
 type (
 	TaskServer struct {
-		Server   database.Server
+		Server   model.Server
 		Assigned bool
 	}
 	TaskViewModel struct {
-		Task    database.Task
+		Task    model.Task
 		Servers []TaskServer
 	}
 )
 
-func NewTaskViewModel(task database.Task, servers []database.Server) TaskViewModel {
-	var isAssigned = func(srv database.Server) bool {
+func NewTaskViewModel(task *model.Task, servers []*model.Server) TaskViewModel {
+	var isAssigned = func(srv model.Server) bool {
 		for _, s := range task.Servers {
 			if s.ID == srv.ID {
 				return true
@@ -116,11 +114,11 @@ func NewTaskViewModel(task database.Task, servers []database.Server) TaskViewMod
 		return false
 	}
 
-	vm := TaskViewModel{Task: task}
+	vm := TaskViewModel{Task: *task}
 	for _, s := range servers {
 		vm.Servers = append(vm.Servers, TaskServer{
-			Server:   s,
-			Assigned: isAssigned(s),
+			Server:   *s,
+			Assigned: isAssigned(*s),
 		})
 	}
 
@@ -131,28 +129,30 @@ func ShowTask(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	store := ctx.Store(ctx.App.DB())
 
-	id, _ := strconv.Atoi(c.Param("id"))
+	ID, _ := strconv.Atoi(c.Param("id"))
 
-	task := new(database.Task)
-	if err := store.Task.First(task, id); err != nil {
+	task, err := store.Task.FindByID(uint(ID))
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrNotFound
 	}
 	task.Script = strings.TrimSpace(task.Script)
 
-	var servers []database.Server
-	if err := store.Server.Find(&servers); err != nil {
+	servers, err := store.Server.All()
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
 
-	return c.Render(http.StatusOK, "task/show", NewTaskViewModel(*task, servers))
+	return c.Render(http.StatusOK, "task/show", NewTaskViewModel(task, servers))
 }
 
 func UpdateTask(c echo.Context) error {
 	ctx := c.(*core.AppContext)
 	sess := ctx.SessionStore(c)
 	store := ctx.Store(ctx.App.DB())
+
+	ID, _ := strconv.Atoi(c.Param("id"))
 
 	t := new(Task)
 	if err := c.Bind(t); err != nil {
@@ -166,14 +166,16 @@ func UpdateTask(c echo.Context) error {
 			sess.FlashError(err)
 		}
 
-		return c.Redirect(http.StatusSeeOther, "/tasks/create")
+		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", ID))
 	}
 
-	id, _ := strconv.Atoi(c.Param("id"))
-	task := new(database.Task)
-	if err := store.Task.First(task, id); err != nil {
+	task, err := store.Task.FindByID(uint(ID))
+	if err != nil {
 		c.Logger().Error(err)
-		return echo.ErrNotFound
+		if err == model.ErrNoResult {
+			return echo.ErrNotFound
+		}
+		return echo.ErrInternalServerError
 	}
 
 	var cmds []string
@@ -181,8 +183,8 @@ func UpdateTask(c echo.Context) error {
 		cmds = append(cmds, strings.TrimSpace(c))
 	}
 
-	var servers []database.Server
-	if err := store.Server.FindMany(&servers, t.ServerIDs); err != nil {
+	servers, err := store.Server.FindMany(t.ServerIDs)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -193,8 +195,8 @@ func UpdateTask(c echo.Context) error {
 	task.Script = strings.Join(cmds, "\n")
 	if err := store.Task.Update(task); err != nil {
 		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityCreationError))
-		return c.Redirect(http.StatusSeeOther, "task/create")
+		sess.FlashError(model.ErrEntityCreation.Error())
+		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/tasks/show/%d", task.ID))
 	}
 
 	sess.FlashSuccess("Task updated successfully.")
@@ -206,17 +208,11 @@ func DeleteTask(c echo.Context) error {
 	sess := ctx.SessionStore(c)
 	store := ctx.Store(ctx.App.DB())
 
-	id, _ := strconv.Atoi(c.Param("id"))
+	ID, _ := strconv.Atoi(c.Param("id"))
 
-	task := new(database.Task)
-	if err := store.Task.First(task, id); err != nil {
+	if err := store.Task.Delete(uint(ID)); err != nil {
 		c.Logger().Error(err)
-		return echo.ErrNotFound
-	}
-
-	if err := store.Task.Delete(task); err != nil {
-		c.Logger().Error(err)
-		sess.FlashError(errors.ErrorText(errors.EntityDeletionError))
+		sess.FlashError(model.ErrEntityCreation.Error())
 		return c.Redirect(http.StatusSeeOther, utils.Route(c, "task.index"))
 	}
 
