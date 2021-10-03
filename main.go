@@ -60,8 +60,8 @@ func RegisterRoutes(e *echo.Echo) {
 	task.GET("/show/:id", handler.ShowTask).Name = "task.show"
 	task.POST("/update/:id", handler.UpdateTask).Name = "task.update"
 	task.POST("/delete/:id", handler.DeleteTask).Name = "task.delete"
-	task.POST("/runs/:id", handler.RunPost).Name = "task.run"
-	task.GET("/runs/show/:id", handler.RunGet).Name = "task.run.show"
+	task.POST("/runs/:id", handler.RunTask).Name = "task.run"
+	task.GET("/runs/show/:id", handler.ShowTaskRun).Name = "task.run.show"
 
 	server := e.Group("/servers", core.AuthMiddleware())
 	server.GET("/create", handler.CreateServerGet).Name = "server.create.get"
@@ -78,4 +78,5 @@ func RegisterRoutes(e *echo.Echo) {
 	bucket.POST("/delete/:id", handler.DeleteBucket).Name = "bucket.delete"
 	bucket.GET("/show/:id", handler.ShowBucket).Name = "bucket.show"
 	bucket.POST("/update/:id", handler.UpdateBucket).Name = "bucket.update"
+	bucket.POST("/runs/:id", handler.RunBucket).Name = "bucket.run"
 }

@@ -30,13 +30,13 @@ type MysqlRunModel struct {
 }
 
 func (m *MysqlRunModel) Create(r *Run) error {
-	_, err := m.DB.Exec(`INSERT INTO runs (task_id, output) VALUES (?, ?)`, r.TaskID, r.Output)
+	_, err := m.DB.Exec(`INSERT INTO task_runs (task_id, output) VALUES (?, ?)`, r.TaskID, r.Output)
 	return err
 }
 
 func (m *MysqlRunModel) FindByID(ID uint) (*Run, error) {
 	r := new(Run)
-	row := m.DB.QueryRow(`SELECT * FROM runs WHERE id = ?`, ID)
+	row := m.DB.QueryRow(`SELECT * FROM task_runs WHERE id = ?`, ID)
 	if err := row.Scan(
 		&r.ID,
 		&r.TaskID,
@@ -53,7 +53,7 @@ func (m *MysqlRunModel) FindByID(ID uint) (*Run, error) {
 }
 
 func (m *MysqlRunModel) FindByTaskID(ID uint) ([]*Run, error) {
-	rows, err := m.DB.Query(`SELECT * FROM runs WHERE task_id = ?`, ID)
+	rows, err := m.DB.Query(`SELECT * FROM task_runs WHERE task_id = ?`, ID)
 	if err != nil {
 		return nil, err
 	}

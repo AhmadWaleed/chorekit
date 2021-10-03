@@ -216,7 +216,7 @@ func (m *MysqlTaskModel) FindByID(ID uint) (*Task, error) {
 	}
 	rows.Close()
 
-	rows, err = m.DB.Query(`SELECT id, output FROM runs WHERE task_id = ?`, t.ID)
+	rows, err = m.DB.Query(`SELECT id, output FROM task_runs WHERE task_id = ?`, t.ID)
 	if err != nil {
 		return t, err
 	}
