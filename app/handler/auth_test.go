@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,48 +9,14 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/session"
-	"github.com/ahmadwaleed/choreui/app/database"
+	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/ahmadwaleed/choreui/app/i18n"
 	"github.com/gorilla/sessions"
-	"gorm.io/gorm"
 )
 
 var testuser = User{
 	Name:  "john",
 	Email: "j.doe@example.com",
-}
-
-type UserFakeStore struct{}
-
-func (s *UserFakeStore) First(m *database.User, conds ...interface{}) error {
-	return nil
-}
-func (s *UserFakeStore) Find(m *[]database.User) error {
-	return nil
-}
-func (s *UserFakeStore) Create(m *database.User) error {
-	return nil
-}
-func (s *UserFakeStore) Ping() error {
-	return nil
-}
-
-type DuplicateUserStore struct {
-	*UserFakeStore
-}
-
-func (s *DuplicateUserStore) First(m *database.User, conds ...interface{}) error {
-	return errors.New("Duplicate user email.")
-}
-
-type RegisteredUserStore struct {
-	*UserFakeStore
-}
-
-func (s *RegisteredUserStore) First(m *database.User, conds ...interface{}) error {
-	m.Name = testuser.Name
-	m.Email = testuser.Email
-	return nil
 }
 
 type FakeHasher struct{}
@@ -97,11 +62,8 @@ func TestSignupPost(t *testing.T) {
 	a.POST("/signup", SignupPost)
 
 	cc := core.AppContext{
-		App: e.app,
-		Loc: i18n.New(),
-		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{User: &DuplicateUserStore{}, Server: nil}
-		},
+		App:          e.app,
+		Loc:          i18n.New(),
 		SessionStore: session.NewSessionStore,
 	}
 
@@ -138,11 +100,8 @@ func TestSignInPost(t *testing.T) {
 	a.POST("/signin", SignInPost)
 
 	cc := core.AppContext{
-		App: e.app,
-		Loc: i18n.New(),
-		Store: func(db *gorm.DB) *database.Store {
-			return &database.Store{User: &RegisteredUserStore{}, Server: nil}
-		},
+		App:          e.app,
+		Loc:          i18n.New(),
 		SessionStore: session.NewSessionStore,
 	}
 
@@ -166,7 +125,7 @@ func TestSignInPost(t *testing.T) {
 		t.Errorf("unexpected session auth value, want: %t, got: %t", true, login)
 	}
 
-	user := (sess.Values["User"]).(database.User)
+	user := (sess.Values["User"]).(model.User)
 	if user.Email != testuser.Email {
 		t.Errorf("unexpected session user email, want: %s, got: %s", testuser.Email, user.Email)
 	}

@@ -156,6 +156,10 @@ func (m *MysqlBucketModel) FindByID(ID uint) (*Bucket, error) {
 		return b, err
 	}
 
+	if err := m.Load(b, "runs"); err != nil {
+		return b, err
+	}
+
 	return b, row.Err()
 }
 
@@ -214,14 +218,16 @@ func (m *MysqlBucketModel) Load(b *Bucket, rel string) error {
 		return rows.Close()
 	case "runs":
 		rows, err := m.DB.Query(`
-			SELECT br.bucket_id,
+			SELECT 
+			br.bucket_id,
 			br.task_run_id,
 			tr.id,
 			tr.task_id,
-			tr.output
+			tr.output,
+			tr.created_at
 			FROM bucket_runs AS br 
 			INNER JOIN task_runs AS tr ON br.task_run_id = tr.id 
-			WHERE bt.bucket_id = ?`,
+			WHERE br.bucket_id = ?`,
 			b.ID,
 		)
 		if err != nil {
@@ -238,9 +244,11 @@ func (m *MysqlBucketModel) Load(b *Bucket, rel string) error {
 				&r.ID,
 				&r.TaskID,
 				&r.Output,
+				&r.CreatedAt,
 			); err != nil {
 				return err
 			}
+			br.Run = r
 			runs = append(runs, br)
 		}
 		b.Runs = runs
