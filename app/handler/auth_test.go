@@ -44,13 +44,13 @@ func (fs *FakeSession) Save(r *http.Request, w http.ResponseWriter, s *sessions.
 }
 
 func TestSignupGet(t *testing.T) {
-	a := e.app.Echo.Group("/auth")
+	a := srv.app.Echo.Group("/auth")
 	a.GET("/signup", SignupGet)
 
 	req := httptest.NewRequest("GET", "/auth/signup", nil)
 	rec := httptest.NewRecorder()
 
-	e.app.Echo.ServeHTTP(rec, req)
+	srv.app.Echo.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("could not visit '/auth/signup' page, status want %d got %d", http.StatusOK, rec.Code)
@@ -58,23 +58,23 @@ func TestSignupGet(t *testing.T) {
 }
 
 func TestSignupPost(t *testing.T) {
-	a := e.app.Echo.Group("/auth")
+	a := srv.app.Echo.Group("/auth")
 	a.POST("/signup", SignupPost)
 
 	cc := core.AppContext{
-		App:          e.app,
+		App:          srv.app,
 		Loc:          i18n.New(),
 		SessionStore: session.NewSessionStore,
 	}
 
-	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
+	srv.app.Echo.Use(core.AppCtxMiddleware(&cc))
 
 	body := fmt.Sprintf("name=%s&email=%s&password=secret", testuser.Name, testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 
-	e.app.Echo.ServeHTTP(rec, req)
+	srv.app.Echo.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusSeeOther {
 		t.Errorf("could not signup new user, status want %d got %d", http.StatusOK, rec.Code)
@@ -82,13 +82,13 @@ func TestSignupPost(t *testing.T) {
 }
 
 func TestSignInGet(t *testing.T) {
-	a := e.app.Echo.Group("/auth")
+	a := srv.app.Echo.Group("/auth")
 	a.GET("/signin", SignupGet)
 
 	req := httptest.NewRequest("GET", "/auth/signin", nil)
 	rec := httptest.NewRecorder()
 
-	e.app.Echo.ServeHTTP(rec, req)
+	srv.app.Echo.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("could not visit '/auth/signin' page, status want %d got %d", http.StatusOK, rec.Code)
@@ -96,23 +96,23 @@ func TestSignInGet(t *testing.T) {
 }
 
 func TestSignInPost(t *testing.T) {
-	a := e.app.Echo.Group("/auth")
+	a := srv.app.Echo.Group("/auth")
 	a.POST("/signin", SignInPost)
 
 	cc := core.AppContext{
-		App:          e.app,
+		App:          srv.app,
 		Loc:          i18n.New(),
 		SessionStore: session.NewSessionStore,
 	}
 
-	e.app.Echo.Use(core.AppCtxMiddleware(&cc))
+	srv.app.Echo.Use(core.AppCtxMiddleware(&cc))
 
 	body := fmt.Sprintf("email=%s&password=secret", testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signin", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 
-	e.app.Echo.ServeHTTP(rec, req)
+	srv.app.Echo.ServeHTTP(rec, req)
 
 	sess := cc.SessionStore(cc.Context)
 
