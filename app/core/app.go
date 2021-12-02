@@ -21,6 +21,22 @@ type Application struct {
 	db        *sql.DB           // Database connection
 }
 
+func NewAppWithDB(db *sql.DB, config *config.AppConfig) (*Application, error) {
+	app := &Application{
+		db:     db,
+		config: config,
+	}
+
+	v, err := validator.NewValidator()
+	if err != nil {
+		return nil, err
+	}
+	app.Validator = v
+	app.Echo = NewRouter(app)
+
+	return app, nil
+}
+
 // NewApp will create a new instance of the application
 func NewApp(config *config.AppConfig) (*Application, error) {
 	app := &Application{}

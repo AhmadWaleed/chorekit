@@ -7,4 +7,4 @@ CREATE TABLE `users` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARSET = utf8 COLLATE = utf8_unicode_ci;
+) ENGINE = InnoDB CHARSET = utf8 COLLATE = utf8_unicode_ci;

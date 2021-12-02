@@ -9,38 +9,14 @@ import (
 
 	"github.com/ahmadwaleed/choreui/app/core"
 	"github.com/ahmadwaleed/choreui/app/core/session"
+	"github.com/ahmadwaleed/choreui/app/database"
 	"github.com/ahmadwaleed/choreui/app/database/model"
 	"github.com/ahmadwaleed/choreui/app/i18n"
-	"github.com/gorilla/sessions"
 )
 
 var testuser = User{
 	Name:  "john",
 	Email: "j.doe@example.com",
-}
-
-type FakeHasher struct{}
-
-func (c *FakeHasher) Generate(password string) (string, error) {
-	return string("hash-password"), nil
-}
-
-func (c *FakeHasher) Verify(hash, passowrd string) bool {
-	return true
-}
-
-type FakeSession struct{}
-
-func (fs *FakeSession) Get(r *http.Request, name string) (*sessions.Session, error) {
-	return &sessions.Session{}, nil
-}
-
-func (fs *FakeSession) New(r *http.Request, name string) (*sessions.Session, error) {
-	return &sessions.Session{}, nil
-}
-
-func (fs *FakeSession) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
-	return nil
 }
 
 func TestSignupGet(t *testing.T) {
@@ -58,16 +34,12 @@ func TestSignupGet(t *testing.T) {
 }
 
 func TestSignupPost(t *testing.T) {
-	a := srv.app.Echo.Group("/auth")
-	a.POST("/signup", SignupPost)
-
-	cc := core.AppContext{
-		App:          srv.app,
-		Loc:          i18n.New(),
-		SessionStore: session.NewSessionStore,
+	if err := migrateUp(); err != nil {
+		t.Error(err)
 	}
 
-	srv.app.Echo.Use(core.AppCtxMiddleware(&cc))
+	a := srv.app.Echo.Group("/auth")
+	a.POST("/signup", SignupPost)
 
 	body := fmt.Sprintf("name=%s&email=%s&password=secret", testuser.Name, testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
@@ -78,6 +50,10 @@ func TestSignupPost(t *testing.T) {
 
 	if rec.Code != http.StatusSeeOther {
 		t.Errorf("could not signup new user, status want %d got %d", http.StatusOK, rec.Code)
+	}
+
+	if err := migrateDown(); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -96,16 +72,26 @@ func TestSignInGet(t *testing.T) {
 }
 
 func TestSignInPost(t *testing.T) {
-	a := srv.app.Echo.Group("/auth")
-	a.POST("/signin", SignInPost)
+	if err := migrateUp(); err != nil {
+		t.Error(err)
+	}
 
 	cc := core.AppContext{
 		App:          srv.app,
 		Loc:          i18n.New(),
+		Store:        database.NewStoreFunc,
 		SessionStore: session.NewSessionStore,
 	}
-
 	srv.app.Echo.Use(core.AppCtxMiddleware(&cc))
+
+	// create test user
+	store := cc.Store(cc.App.DB())
+	if err := store.User.Create(testuser.Name, testuser.Email, "$2y$10$9P7pi./SZRBmilkg3ELey.AgM8vYbUiDenWxYF2r6X8CcyUllNIDO"); err != nil {
+		t.Errorf("could not create test user: %v", err)
+	}
+
+	a := srv.app.Echo.Group("/auth")
+	a.POST("/signin", SignInPost)
 
 	body := fmt.Sprintf("email=%s&password=secret", testuser.Email)
 	req := httptest.NewRequest("POST", "/auth/signin", strings.NewReader(body))
@@ -113,7 +99,6 @@ func TestSignInPost(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	srv.app.Echo.ServeHTTP(rec, req)
-
 	sess := cc.SessionStore(cc.Context)
 
 	if !sess.GetBool("Auth") {
@@ -132,5 +117,9 @@ func TestSignInPost(t *testing.T) {
 
 	if rec.Code != http.StatusSeeOther {
 		t.Errorf("could not login user, status want %d got %d", http.StatusOK, rec.Code)
+	}
+
+	if err := migrateDown(); err != nil {
+		t.Error(err)
 	}
 }
