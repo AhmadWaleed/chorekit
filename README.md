@@ -1,1 +1,1 @@
-# choreui
+# chorekit
