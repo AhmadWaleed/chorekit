@@ -1,28 +1,36 @@
 version: "3"
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
   mysql:
     image: "mysql:8.0"
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: chore
-      MYSQL_USER: chore
-      MYSQL_PASSWORD: chore
+      MYSQL_DATABASE: chorekit
+      MYSQL_USER: chorekit
+      MYSQL_PASSWORD: chorekit
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-      - "choremysql:/var/lib/mysql"
+      - "chorekitmysql:/var/lib/mysql"
     networks:
-      - chore
+      - chorekit
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-pchore"]
       retries: 3
       timeout: 5s
 
 networks:
-  chore:
+  chorekit:
     driver: bridge
 
 volumes:
-    choremysql:
+    chorekitmysql:
         driver: local
