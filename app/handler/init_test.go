@@ -87,19 +87,3 @@ func TestMain(m *testing.M) {
 
 	os.Exit(code)
 }
-
-// migrateUp migrates the db migrations
-func migrateUp() error {
-	if err := migrator.Up(); err != nil {
-		return fmt.Errorf("could not run test db migrations: %v", err)
-	}
-	return nil
-}
-
-// migrateDown drops the db migrations
-func migrateDown() error {
-	if err := migrator.Down(); err != nil {
-		return fmt.Errorf("could not run drop db migrations: %v", err)
-	}
-	return nil
-}

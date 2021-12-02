@@ -30,7 +30,7 @@ func TestSignupGet(t *testing.T) {
 }
 
 func TestSignupPost(t *testing.T) {
-	if err := migrateUp(); err != nil {
+	if err := migrator.Up(); err != nil {
 		t.Error(err)
 	}
 
@@ -48,7 +48,7 @@ func TestSignupPost(t *testing.T) {
 		t.Errorf("could not signup new user, status want %d got %d", http.StatusOK, rec.Code)
 	}
 
-	if err := migrateDown(); err != nil {
+	if err := migrator.Down(); err != nil {
 		t.Error(err)
 	}
 }
@@ -68,7 +68,7 @@ func TestSignInGet(t *testing.T) {
 }
 
 func TestSignInPost(t *testing.T) {
-	if err := migrateUp(); err != nil {
+	if err := migrator.Up(); err != nil {
 		t.Error(err)
 	}
 
@@ -107,7 +107,7 @@ func TestSignInPost(t *testing.T) {
 		t.Errorf("could not login user, status want %d got %d", http.StatusOK, rec.Code)
 	}
 
-	if err := migrateDown(); err != nil {
+	if err := migrator.Down(); err != nil {
 		t.Error(err)
 	}
 }
