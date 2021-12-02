@@ -21,6 +21,7 @@ type AppConfig struct {
 	Lang              string `env:"LANG" envDefault:"en_US"`
 	LangDomain        string `env:"LANG_DOMAIN" envDefault:"default"`
 	AppKey            string `env:"APP_KEY,required"`
+	MigrationsPath    string `env:"MIGRATIONS_PATH,required"`
 }
 
 func NewConfig(files ...string) (*AppConfig, error) {
